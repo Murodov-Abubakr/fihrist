@@ -33,7 +33,7 @@ export function FieldMap() {
   const zoom = preset?.zoom ?? 8;
 
   return (
-    <div className="relative h-56 overflow-hidden rounded-lg border border-brass/20 sm:h-64">
+    <div className="relative h-56 overflow-hidden border border-brass/50 sm:h-64" style={{ borderRadius: '6px 6px 28px 6px' }}>
       <MapContainer center={[state.lat, state.lon]} zoom={zoom} worldCopyJump className="h-full w-full" attributionControl>
         {/* Esri World Imagery satellite basemap (no key required; attribution required). Static string, no user input. */}
         <TileLayer
@@ -44,19 +44,12 @@ export function FieldMap() {
         <ClickHandler />
         <FlyTo lat={state.lat} lon={state.lon} zoom={zoom} />
         {PRESETS.map((p) => (
-          <CircleMarker key={p.id} center={[p.lat, p.lon]} radius={3.5} pathOptions={{ color: '#C9A55A', weight: 1, fillColor: '#C9A55A', fillOpacity: 0.5 }} />
+          <CircleMarker key={p.id} center={[p.lat, p.lon]} radius={3.5} pathOptions={{ color: '#C98B66', weight: 1, fillColor: '#C98B66', fillOpacity: 0.7 }} />
         ))}
-        {/* reticle: outer hairline ring + glowing core */}
-        <CircleMarker center={[state.lat, state.lon]} radius={16} pathOptions={{ color: '#C9A55A', weight: 1, opacity: 0.8, fill: false, dashArray: '3 4' }} />
-        <CircleMarker center={[state.lat, state.lon]} radius={5} pathOptions={{ color: '#F4ECDA', weight: 1.5, fillColor: '#C9A55A', fillOpacity: 1 }} />
+        {/* reticle: dashed copper ring + white glowing core */}
+        <CircleMarker center={[state.lat, state.lon]} radius={17} pathOptions={{ color: '#C98B66', weight: 1.2, opacity: 1, fill: false, dashArray: '2 4', className: 'reticle' }} />
+        <CircleMarker center={[state.lat, state.lon]} radius={5} pathOptions={{ color: '#FFFFFF', weight: 1.5, fillColor: '#F2EFEA', fillOpacity: 1, className: 'reticle' }} />
       </MapContainer>
-      {/* HUD corner ticks over the map */}
-      <div aria-hidden className="pointer-events-none absolute inset-2 z-[500]">
-        <span className="absolute left-0 top-0 h-3 w-3 border-l border-t border-brass/70" />
-        <span className="absolute right-0 top-0 h-3 w-3 border-r border-t border-brass/70" />
-        <span className="absolute bottom-0 left-0 h-3 w-3 border-b border-l border-brass/70" />
-        <span className="absolute bottom-0 right-0 h-3 w-3 border-b border-r border-brass/70" />
-      </div>
     </div>
   );
 }

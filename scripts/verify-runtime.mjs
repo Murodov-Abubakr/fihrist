@@ -8,9 +8,12 @@ const base = process.argv[2] ?? 'http://localhost:4174';
 const ALLOWED_HOSTS = new Set([new URL(base).host, 'server.arcgisonline.com', 'power.larc.nasa.gov']);
 const problems = [];
 
-const browser = await puppeteer.launch({ executablePath: 'C:/Program Files/Google/Chrome/Application/chrome.exe' });
+const browser = await puppeteer.launch({ executablePath: 'C:/Program Files/Google/Chrome/Application/chrome.exe', args: ['--disable-gpu-vsync', '--disable-frame-rate-limit'] /* render even if the host display sleeps */ });
 const page = await browser.newPage();
 await page.setViewport({ width: 1440, height: 900 });
+// Functional checks run with reduced motion so they don't depend on animation timing
+// (also exercises the app's reduced-motion path). Pass --motion to test with animations on.
+if (!process.argv.includes('--motion')) await page.emulateMediaFeatures([{ name: 'prefers-reduced-motion', value: 'reduce' }]);
 
 page.on('console', (m) => {
   if (m.type() === 'error' || /Content Security Policy|Refused to/i.test(m.text())) problems.push(`console.${m.type()}: ${m.text()}`);
@@ -57,7 +60,12 @@ await click('Methodology');
 const dialog = await page.evaluate(() => !!document.querySelector('[role="dialog"]'));
 if (!dialog) problems.push('methodology drawer did not open');
 await page.keyboard.press('Escape');
-await new Promise((r) => setTimeout(r, 500));
+try {
+  await page.waitForFunction(() => !document.querySelector('[role="dialog"]'), { timeout: 5000 });
+} catch {
+  problems.push('methodology drawer did not close on Escape');
+}
+await new Promise((r) => setTimeout(r, 1800)); // let any map fly-to finish before clicking the map
 
 // Map click → coordinates update and stay in range
 const box = await page.evaluate(() => {
@@ -66,8 +74,8 @@ const box = await page.evaluate(() => {
 });
 await page.mouse.click(box.x, box.y);
 await new Promise((r) => setTimeout(r, 800));
-const coords = await page.evaluate(() => [...document.querySelectorAll('.num')].map((e) => e.textContent).find((t) => t?.includes('°,')));
-const m = coords?.match(/(-?\d+\.\d+)°, (-?\d+\.\d+)°/);
+const coords = await page.evaluate(() => [...document.querySelectorAll('.num')].map((e) => e.textContent).find((t) => /°\s*[,/]\s*-?\d/.test(t ?? '')));
+const m = coords?.match(/(-?\d+\.\d+)°\s*[,/]\s*(-?\d+\.\d+)°/);
 if (!m || Math.abs(+m[1]) > 90 || Math.abs(+m[2]) > 180) problems.push(`map click produced bad coordinates: ${coords}`);
 
 // Tampered storage: XSS payload as language must fall back to en

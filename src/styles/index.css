@@ -2,93 +2,129 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Fine stone grain (SVG fractal noise as a data: URI — allowed by CSP img-src data:) */
+:root {
+  --grain: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='220' height='220'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 1 0 0 0 0 1 0 0 0 0 1 0 0 0 .55 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+}
+
 @layer base {
-  html { color-scheme: dark; }
+  html { color-scheme: dark; background: #131518; }
   body {
-    @apply bg-ink text-parchment font-sans antialiased;
+    @apply text-parchment font-sans antialiased;
+    background: transparent; /* html paints the base; body stays transparent so the fixed space map shows */
     min-height: 100vh;
     padding-bottom: env(safe-area-inset-bottom, 0px);
   }
-  :focus-visible { outline: 1.5px solid #C9A55A; outline-offset: 2px; }
+  :focus-visible { outline: 2px solid #F2EFEA; outline-offset: 3px; }
 }
 
 @layer components {
-  /* HUD panel: dark glass, hairline border, glowing top rule with node dots at each end */
-  .hud {
-    @apply relative rounded-xl border border-brass/[0.14] bg-panel/60 backdrop-blur-md;
-    box-shadow: inset 0 1px 0 rgba(234, 223, 200, 0.03), 0 24px 48px -32px rgba(0, 0, 0, 0.9);
+  /* Stone slab card: grey stone, grain, copper hairline, one large rounded corner */
+  .slab {
+    @apply relative border border-brass/50;
+    border-radius: 6px 6px 40px 6px;
+    background:
+      var(--grain),
+      linear-gradient(165deg, rgba(52, 57, 64, 0.62) 0%, rgba(30, 33, 38, 0.82) 55%, rgba(20, 22, 25, 0.9) 100%);
+    background-size: 220px 220px, auto;
+    background-blend-mode: soft-light, normal;
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.05), 0 24px 50px -30px rgba(0, 0, 0, 0.95);
   }
-  .hud::before {
-    content: '';
-    position: absolute;
-    left: 18px; right: 18px; top: -1px; height: 1px;
-    background: linear-gradient(90deg, transparent, rgba(201, 165, 90, 0.7) 20%, rgba(201, 165, 90, 0.7) 80%, transparent);
-    pointer-events: none;
+  /* Plain stone panel (no copper edge) for side panels */
+  .stone {
+    @apply relative rounded-md border border-white/[0.07];
+    background:
+      var(--grain),
+      linear-gradient(180deg, rgba(40, 44, 50, 0.55), rgba(22, 24, 28, 0.7));
+    background-size: 220px 220px, auto;
+    background-blend-mode: soft-light, normal;
   }
 
-  /* Hairline divider with node dots: o────────o */
+  /* Hairline with dot ends, like o────────o */
   .node-rule {
     position: relative;
     height: 1px;
-    background: linear-gradient(90deg, rgba(201,165,90,.5), rgba(201,165,90,.12) 50%, rgba(201,165,90,.5));
+    background: rgba(163, 169, 177, 0.35);
   }
   .node-rule::before, .node-rule::after {
     content: '';
-    position: absolute; top: -2.5px;
-    width: 6px; height: 6px; border-radius: 9999px;
-    border: 1px solid rgba(201, 165, 90, 0.8);
-    background: #0B1020;
+    position: absolute; top: -2px;
+    width: 5px; height: 5px; border-radius: 9999px;
+    background: #A3A9B1;
   }
-  .node-rule::before { left: -3px; }
-  .node-rule::after { right: -3px; }
+  .node-rule::before { left: -2px; }
+  .node-rule::after { right: -2px; }
 
-  .hud-title { @apply font-display font-semibold uppercase tracking-[0.2em] text-parchment; }
-  .eyebrow { @apply font-display text-[11px] font-medium uppercase tracking-[0.22em] text-brass; }
+  /* Uppercase, widely tracked UI labels */
+  .label-caps { @apply font-display uppercase tracking-[0.2em]; }
+  .title-caps { @apply font-display font-semibold uppercase tracking-[0.06em] text-parchment; }
+  .eyebrow { @apply font-display text-[11px] font-medium uppercase tracking-[0.24em] text-slate; }
   .num { @apply font-mono tabular-nums; }
 
+  /* Pill button — outlined; selected = white glowing pill with dark text */
   .chip {
-    @apply rounded-md border border-slate/20 bg-ink/30 px-2.5 py-1.5 text-sm text-parchment/85 transition-all duration-200;
+    @apply rounded-full border border-parchment/25 bg-black/20 px-3.5 py-1.5 text-sm text-parchment transition-all duration-200;
   }
-  .chip:hover { @apply border-brass/50 text-parchment; }
+  .chip:hover { @apply border-parchment/60 bg-white/[0.04]; }
   .chip[aria-pressed='true'] {
-    @apply border-brass/80 bg-brass/10 text-parchment;
-    box-shadow: 0 0 14px -4px rgba(201, 165, 90, 0.55), inset 0 0 10px -6px rgba(201, 165, 90, 0.6);
+    @apply border-white bg-pill font-medium text-ink shadow-select;
   }
 
-  /* Range input: hairline track with brass fill and a glowing ring thumb */
+  /* Tab (top navigation): grey caps, active = bright with copper underline */
+  .tab {
+    @apply relative px-1 py-2 font-display text-[12px] font-medium uppercase tracking-[0.22em] text-slate transition-colors;
+  }
+  .tab:hover { @apply text-parchment; }
+  .tab[aria-pressed='true'] { @apply text-parchment; }
+  .tab[aria-pressed='true']::after {
+    content: '';
+    position: absolute; left: 15%; right: 15%; bottom: -2px; height: 3px; border-radius: 2px;
+    background: #C98B66;
+    box-shadow: 0 0 8px rgba(201, 139, 102, 0.7);
+  }
+
+  /* Key-cap badge (like small controller hints) */
+  .keycap {
+    @apply rounded-[4px] border border-white/15 bg-white/[0.08] px-2 py-0.5 font-display text-[10px] font-semibold uppercase tracking-[0.12em] text-slate transition-all;
+  }
+  .keycap:hover { @apply text-parchment; }
+  .keycap[aria-pressed='true'] { @apply border-white bg-pill text-ink shadow-select; }
+
+  /* Range: dark track, copper progress fill, white glowing thumb */
   .range {
     -webkit-appearance: none;
     appearance: none;
     width: 100%;
-    height: 2px;
-    border-radius: 2px;
-    background: linear-gradient(90deg, #C9A55A var(--fill, 50%), rgba(163, 170, 194, 0.18) var(--fill, 50%));
+    height: 4px;
+    border-radius: 4px;
+    background: linear-gradient(90deg, #C98B66 var(--fill, 50%), rgba(0, 0, 0, 0.55) var(--fill, 50%));
+    box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.06);
     cursor: pointer;
   }
   .range::-webkit-slider-thumb {
     -webkit-appearance: none;
     width: 14px; height: 14px; border-radius: 50%;
-    background: #0B1020; border: 1.5px solid #C9A55A;
-    box-shadow: 0 0 10px rgba(201, 165, 90, 0.6);
+    background: #F2EFEA;
+    box-shadow: 0 0 0 3px rgba(19, 21, 24, 0.9), 0 0 0 4px rgba(255, 255, 255, 0.35), 0 0 14px rgba(255, 255, 255, 0.6);
   }
   .range::-moz-range-thumb {
-    width: 12px; height: 12px; border-radius: 50%;
-    background: #0B1020; border: 1.5px solid #C9A55A;
-    box-shadow: 0 0 10px rgba(201, 165, 90, 0.6);
+    width: 12px; height: 12px; border: 0; border-radius: 50%;
+    background: #F2EFEA;
+    box-shadow: 0 0 0 3px rgba(19, 21, 24, 0.9), 0 0 0 4px rgba(255, 255, 255, 0.35), 0 0 14px rgba(255, 255, 255, 0.6);
   }
 }
 
-/* Twinkle for a subset of background stars (disabled for reduced motion below) */
-@keyframes twinkle { 0%, 100% { opacity: 0.25; } 50% { opacity: 0.9; } }
-.twinkle { animation: twinkle 4s ease-in-out infinite; }
+/* Planet orbits (background). Pure transform animation → runs on the compositor. */
+@keyframes orbit { to { transform: rotate(360deg); } }
 
-/* Leaflet adaptation */
-.leaflet-container { background: #0B1020; font-family: Inter, system-ui, sans-serif; }
-.leaflet-tile-pane { filter: brightness(0.62) saturate(0.55) contrast(1.1) hue-rotate(-8deg); }
-.leaflet-control-attribution { background: rgba(11, 16, 32, 0.8) !important; color: #A3AAC2 !important; font-size: 9px; }
-.leaflet-control-attribution a { color: #C9A55A !important; }
-.leaflet-bar { border: 1px solid rgba(201,165,90,.3) !important; border-radius: 8px !important; overflow: hidden; }
-.leaflet-bar a { background: rgba(20,26,51,.9) !important; color: #EADFC8 !important; border-color: rgba(201,165,90,.2) !important; }
+/* Leaflet: monochrome stone-toned satellite so the copper/white UI reads on top */
+.leaflet-container { background: #131518; font-family: Inter, system-ui, sans-serif; }
+.leaflet-tile-pane { filter: grayscale(1) brightness(0.58) contrast(1.2); }
+.leaflet-control-attribution { background: rgba(19, 21, 24, 0.85) !important; color: #A3A9B1 !important; font-size: 9px; }
+.leaflet-control-attribution a { color: #E8B391 !important; }
+.leaflet-bar { border: 1px solid rgba(236,232,225,.25) !important; border-radius: 9999px !important; overflow: hidden; }
+.leaflet-bar a { background: rgba(30,33,38,.92) !important; color: #ECE8E1 !important; border-color: rgba(236,232,225,.15) !important; }
+.leaflet-overlay-pane path.reticle { filter: drop-shadow(0 0 3px rgba(255, 255, 255, 0.9)) drop-shadow(0 0 8px rgba(201, 139, 102, 0.8)); }
 
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { animation-duration: 0.001ms !important; animation-iteration-count: 1 !important; transition-duration: 0.001ms !important; }

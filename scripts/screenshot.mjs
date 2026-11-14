@@ -10,6 +10,7 @@ mkdirSync(out, { recursive: true });
 const browser = await puppeteer.launch({
   executablePath: 'C:/Program Files/Google/Chrome/Application/chrome.exe',
   headless: true,
+  args: ['--disable-gpu-vsync', '--disable-frame-rate-limit'], // render even if the host display sleeps
 });
 
 async function shot(name, { width, height, lang, mode, drawer, fullPage = true }) {

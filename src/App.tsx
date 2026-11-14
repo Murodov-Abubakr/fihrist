@@ -1,7 +1,8 @@
 import { useCallback, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { MotionConfig } from 'framer-motion';
 import { initialState, StoreContext, type AppState } from './state';
-import { StarChart } from './components/StarChart';
+import { SpaceMap } from './components/SpaceMap';
 import { TopBar } from './components/TopBar';
 import { Banner } from './components/Banner';
 import { LeftPanel } from './components/LeftPanel';
@@ -22,24 +23,33 @@ export default function App() {
 
   return (
     <StoreContext.Provider value={store}>
-      <StarChart />
+      {/* Framer Motion honours the OS "reduce motion" setting only when told to */}
+      <MotionConfig reducedMotion="user">
+      <SpaceMap />
       <TopBar onMethodology={() => setMethodOpen(true)} />
       <Banner />
-      <main className="mx-auto grid max-w-[1600px] gap-5 px-4 py-5 lg:grid-cols-[minmax(320px,380px)_1fr]">
+      <main className="mx-auto grid max-w-[1600px] gap-6 px-4 py-6 sm:px-6 lg:grid-cols-[minmax(320px,380px)_1fr]">
         <LeftPanel />
-        <div className="min-w-0 space-y-5">
-          <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+        <div className="relative min-w-0 space-y-8">
+          {/* huge faded section word behind the content */}
+          <div aria-hidden className="pointer-events-none absolute -top-6 left-0 right-0 -z-0 select-none overflow-hidden">
+            <span className="block whitespace-nowrap font-display text-[clamp(5rem,13vw,13rem)] font-bold uppercase leading-none tracking-[0.04em] text-black/30">
+              {t(`nav.${state.mode}`)}
+            </span>
+          </div>
+          <div className="relative grid gap-x-6 gap-y-8 pt-10 md:grid-cols-2 xl:grid-cols-3">
             {cards.map((id, i) => (
-              <RotationCard key={id} id={id} rank={i + 1} index={i} />
+              <RotationCard key={id} id={id} rank={i + 1} total={cards.length} index={i} />
             ))}
           </div>
-          <Timeline />
-          <ChartsShell />
+          <div className="relative"><Timeline /></div>
+          <div className="relative"><ChartsShell /></div>
         </div>
       </main>
       <Drawer open={methodOpen} title={t('nav.methodology')} onClose={closeMethod}>
-        <p className="text-sm text-parchment/85">{t('drawer.methodologyBody')}</p>
+        <p className="text-sm leading-relaxed text-parchment">{t('drawer.methodologyBody')}</p>
       </Drawer>
+      </MotionConfig>
     </StoreContext.Provider>
   );
 }
