@@ -1,0 +1,55 @@
+# Security & integrity audit — Project Fihrist
+
+Audit date: 2026-11-14 (after step 1). Scope: every file in the repository at that point.
+Architecture audited: static Vite/React SPA, planned Cloudflare Pages + Pages Functions; **no server-side
+code exists yet**, so server controls are recorded as design requirements for the steps that add them.
+
+Status key: **PASS** (already compliant) · **HARDENED** (defect found and fixed in this pass) ·
+**N/A-now** (no such surface exists yet; requirement recorded) · **OPEN** (decision needed).
+
+## OWASP Top 10 (2021) audit
+
+| ID | Area | Files | Status | Finding → action |
+|---|---|---|---|---|
+| A01 | Access control / CORS / CSRF | whole repo | N/A-now | Static site, no API, no credentials, no admin/debug routes. **Requirement:** `/api/simulate` will be same-origin only (no CORS headers emitted), POST JSON only, no cookies. |
+| A02 | Secrets hygiene | `.gitignore`, all source | HARDENED | No secrets found (automated scan in `src/security.test.ts`). `.gitignore` lacked `.env*`, `.dev.vars` (Wrangler secrets), `*.pem`, `*.key`, `__pycache__/` → added. |
+| A02 | Transport | `FieldMap.tsx`, `index.html` | PASS | All external URLs are `https://` (test-enforced). HSTS header added. |
+| A03 | XSS / injection sinks | `src/**` | PASS | No `eval`, `new Function`, `dangerouslySetInnerHTML`, `innerHTML=`, `document.write` (test-enforced). Leaflet attribution is a static constant; no popups with user content. React escapes all i18n output. |
+| A03 | Untrusted storage input | `src/i18n/index.ts` | HARDENED | Language read from `localStorage` was passed straight to i18next and `<html lang>`. Now allowlisted via `safeLang()`; XSS payload test proves fallback to `en`. |
+| A03/A08 | Coordinate input | `FieldMap.tsx`, new `src/lib/geo.ts` | HARDENED | Map clicks after panning across the antimeridian produced longitudes outside ±180 (would be sent to NASA POWER as invalid). Added `clampLat`, `wrapLon`, strict `isValidLatLon`; unit-tested with NaN/∞/strings/injection strings. |
+| A03 | Slider input | `LeftPanel.tsx` | HARDENED | Slider values now `Number()`-parsed, finite-checked and clamped to the slider's min/max before entering state. |
+| A04 | Resource exhaustion | — | N/A-now | No Monte Carlo yet. **Requirement:** trajectories hard-capped server- and client-side; Web Worker pool `min(hardwareConcurrency, 12)`; upstream fetch timeout ≤ 10 s with `AbortController`. |
+| A05 | Security headers | new `security-headers.ts`, `public/_headers`, `vite.config.ts` | HARDENED | There were no headers. Added strict CSP (`script-src 'self'`, `style-src 'self'`, no `unsafe-*`, `frame-ancestors 'none'`, `object-src 'none'`, `connect-src` limited to self + NASA POWER), `nosniff`, `X-Frame-Options: DENY`, `Referrer-Policy`, `Permissions-Policy`, COOP, HSTS. One source of truth → Cloudflare `_headers` + `vite preview`; test asserts they match. Runtime check proves the app works under this CSP with zero violations. |
+| A05 | Source maps / debug | `vite.config.ts` | PASS | `build.sourcemap: false`. No debug endpoints. (FastAPI `/docs` concern not applicable — no FastAPI; see OPEN-1.) |
+| A06 | Vulnerable components | `package.json` | HARDENED | `npm audit` found 16 (2 critical, 11 high, 3 moderate), **all in dev tooling** (vitest/tinypool, vite, postcss, puppeteer-core); production deps had 0. Upgraded vite 6.0.7→6.4.6, vitest 2.1.8→4.1.12, postcss→8.5.33, puppeteer-core→25.17.0, plugin-react→4.7.0. **Now 0 vulnerabilities.** |
+| A06 | Pinning / third-party CDN | `package.json`, `.npmrc`, `index.html` | HARDENED | Ranges (`^`) → exact versions, `.npmrc save-exact=true`, lockfile committed (test-enforced). Google Fonts CSS link (cannot carry SRI — content is UA-dependent) replaced by self-hosted `@fontsource` packages; **no third-party script/style at runtime**. |
+| A07 | Authentication | — | N/A-now | No accounts or sessions. **Requirement:** any future feedback endpoint uses `HttpOnly; Secure; SameSite=Strict` cookies or none. |
+| A08 | Data integrity | — | N/A-now | No NASA ingestion yet. **Requirement (step 2):** schema + type + NaN/fill-value (`-999`) + physical-range validation of every POWER field before use; Worker `onmessage` structural validation. Lockfile integrity hashes present. |
+| A09 | Logging | — | N/A-now | No server. **Requirement:** Pages Function logs structured events (invalid input, rate-limit, errors) with coordinates rounded to 0.1° and no headers/IPs. |
+| A10 | SSRF | — | PASS (by design) | No server-side outbound requests exist or are planned: the browser calls NASA POWER directly and `/api/simulate` only computes. URLs are never user-supplied. CSP `connect-src` restricts the browser to self + `power.larc.nasa.gov`. |
+
+## Scientific & Field Shift rubric
+
+| Check | Status | Note |
+|---|---|---|
+| Five sections per rotation (why / evidence / benefits / gaps / risks) | PASS (shell) | Present on all three cards; content arrives with the engine (step 3). |
+| No invented numbers | PASS | All metrics show "—" until computed from real data. |
+| No medical / biofuel / rigged claims | PASS | None in code or copy. |
+| Equations (ET0, GDD, N balance, Monte Carlo) | N/A-now | Step 2–4, each with a cited source in `SOURCES.md` and unit tests. |
+
+## Verification (reproducible)
+
+```
+npm audit                              # 0 vulnerabilities
+npm test                               # 20 tests: sink scan, secret scan, https, headers, pinning, sanitisers, i18n
+npm run build                          # tsc strict + vite build, no warnings
+npx vite preview --port 4174 &
+node scripts/verify-runtime.mjs        # headers served, 0 CSP violations, 0 console errors,
+                                       # only allowlisted hosts, presets/lang/mode/drawer/map-click OK,
+                                       # tampered localStorage rejected
+```
+
+## Open decisions (need project-owner input)
+- **OPEN-1** Backend: FastAPI (security prompt) vs Cloudflare Pages Functions (PROMPT.md). Current build follows PROMPT.md.
+- **OPEN-2** "BLiSS / Martian carrying capacity" and "residue energy" outputs conflict with CLAUDE.md (space framing in closing section only; no crop-to-fuel).
+- **OPEN-3** Evidence datasets: SMAP / GPM / ECOSTRESS / SRTM are cited in the rubric list, but only datasets actually fetched will be shown as evidence.

@@ -1,4 +1,9 @@
-/** "Observatory Ledger" design tokens. Hex values from PROMPT.md; slate chosen for WCAG AA (see src/styles/contrast note). */
+/**
+ * Design tokens — palette from PROMPT.md, rendered as a modern orbital HUD.
+ * Contrast (WCAG AA, measured on #141A33 panel): parchment 13.0, brass 7.4, slate 7.4,
+ * verdigris-light 6.9, terracotta-light 5.8. Base verdigris (4.4) and terracotta (3.9)
+ * are used only for fills, bars and borders, never for small text.
+ */
 /** @type {import('tailwindcss').Config} */
 export default {
   content: ['./index.html', './src/**/*.{ts,tsx}'],
@@ -15,9 +20,13 @@ export default {
         slate: { DEFAULT: '#A3AAC2', dim: '#6B7290' },
       },
       fontFamily: {
-        display: ['Fraunces', 'Cormorant Garamond', 'Georgia', 'serif'],
-        sans: ['Inter', 'IBM Plex Sans', 'system-ui', 'sans-serif'],
-        mono: ['"IBM Plex Mono"', '"JetBrains Mono"', 'ui-monospace', 'monospace'],
+        display: ['"Exo 2"', 'Inter', 'system-ui', 'sans-serif'],
+        sans: ['Inter', 'system-ui', 'sans-serif'],
+        mono: ['"IBM Plex Mono"', 'ui-monospace', 'monospace'],
+      },
+      boxShadow: {
+        glow: '0 0 0 1px rgba(201,165,90,.55), 0 0 18px -2px rgba(201,165,90,.45)',
+        'glow-soft': '0 0 24px -6px rgba(201,165,90,.35)',
       },
     },
   },

@@ -19,9 +19,9 @@ async function shot(name, { width, height, lang, mode, drawer, fullPage = true }
   await page.goto(base, { waitUntil: 'networkidle0', timeout: 60000 });
   if (mode === 'scientist') {
     const label = { en: 'Scientist', ru: 'Учёный', tg: 'Олим' }[lang];
-    await page.evaluate((txt) => [...document.querySelectorAll('button')].find((b) => b.textContent === txt)?.click(), label);
+    await page.evaluate((txt) => [...document.querySelectorAll('button')].find((b) => b.textContent?.trim() === txt)?.click(), label);
   }
-  if (drawer) await page.evaluate(() => document.querySelector('header button.font-display')?.click());
+  if (drawer) await page.evaluate(() => document.querySelector('[data-action="methodology"]')?.click());
   await new Promise((r) => setTimeout(r, 2200)); // let reveal + map fly-to settle
   await page.screenshot({ path: `${out}/${name}.png`, fullPage });
   await page.close();

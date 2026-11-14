@@ -18,5 +18,5 @@ _Added in step 2/3 (FAO-56 Table 12, USDA FoodData Central, FAO GAEZ)._
 | Asset | Source / licence |
 |---|---|
 | Satellite basemap | Esri World Imagery (Esri, Maxar, Earthstar Geographics, GIS User Community); attribution shown on map |
-| Fonts | Fraunces, Cormorant Garamond, Inter, IBM Plex Mono via Google Fonts (SIL Open Font License) |
+| Fonts | Exo 2, Inter, IBM Plex Mono — self-hosted via @fontsource 5.3.0 (SIL Open Font License 1.1) |
 | Map library | Leaflet 1.9.4 (BSD-2) |

@@ -4,3 +4,20 @@ dist
 *.local
 screenshots/
 *.tsbuildinfo
+# secrets & local env (OWASP A02)
+.env
+.env.*
+!.env.example
+.dev.vars
+*.pem
+*.key
+*.p12
+*.crt
+# python
+__pycache__/
+*.py[cod]
+.venv/
+# local caches / dumps
+.cache/
+cache/
+*.log

@@ -6,18 +6,17 @@ function Wordmark() {
   const { t } = useTranslation();
   return (
     <div className="flex items-center gap-3">
-      <svg width="34" height="34" viewBox="0 0 32 32" aria-hidden>
-        <circle cx="16" cy="16" r="13" fill="none" stroke="#C9A55A" strokeWidth="1.2" />
-        <circle cx="16" cy="16" r="7" fill="none" stroke="#C9A55A" strokeWidth="0.8" opacity="0.7" />
-        <ellipse cx="16" cy="16" rx="13" ry="5" fill="none" stroke="#EADFC8" strokeWidth="0.6" opacity="0.5" transform="rotate(-23 16 16)" />
-        <path d="M16 3v26M3 16h26" stroke="#C9A55A" strokeWidth="0.6" opacity="0.6" />
-        <circle cx="16" cy="16" r="1.8" fill="#C9A55A" />
+      <svg width="36" height="36" viewBox="0 0 36 36" aria-hidden className="overflow-visible">
+        <circle cx="18" cy="18" r="15" fill="none" stroke="#C9A55A" strokeWidth="1" opacity="0.9" />
+        <ellipse cx="18" cy="18" rx="15" ry="5.5" fill="none" stroke="#A3AAC2" strokeWidth="0.7" opacity="0.6" transform="rotate(-25 18 18)" />
+        <circle cx="18" cy="18" r="4" fill="#C9A55A" style={{ filter: 'drop-shadow(0 0 4px rgba(201,165,90,.8))' }} />
+        <circle cx="31.5" cy="11.7" r="1.8" fill="#5FB3A1" />
       </svg>
-      <div className="leading-tight">
-        <div className="font-display text-xl tracking-wide text-parchment">
-          Project <span className="text-brass">{t('app.name')}</span>
+      <div className="leading-none">
+        <div className="font-display text-lg font-semibold uppercase tracking-[0.32em] text-parchment">
+          {t('app.name')}
         </div>
-        <div className="hidden text-[11px] italic text-slate sm:block">{t('app.tagline')}</div>
+        <div className="mt-1 hidden text-[10px] uppercase tracking-[0.2em] text-slate sm:block">{t('app.tagline')}</div>
       </div>
     </div>
   );
@@ -27,42 +26,37 @@ export function TopBar({ onMethodology }: { onMethodology: () => void }) {
   const { t, i18n } = useTranslation();
   const { state, set } = useStore();
 
+  const seg = (active: boolean) =>
+    `px-3 py-1 text-[11px] font-display font-medium uppercase tracking-[0.16em] transition-all ${
+      active ? 'text-ink bg-brass shadow-glow' : 'text-parchment/70 hover:text-parchment'
+    }`;
+
   return (
-    <header className="sticky top-0 z-[1000] border-b border-brass/20 bg-ink/85 backdrop-blur" style={{ top: 'env(safe-area-inset-top, 0px)' }}>
+    <header className="sticky z-[1000] border-b border-brass/10 bg-ink/70 backdrop-blur-md" style={{ top: 'env(safe-area-inset-top, 0px)' }}>
       <div className="mx-auto flex max-w-[1600px] flex-wrap items-center justify-between gap-3 px-4 py-3">
         <Wordmark />
         <div className="flex flex-wrap items-center gap-2 sm:gap-3">
-          <div role="group" aria-label={t('nav.language')} className="flex overflow-hidden rounded border border-brass/30">
+          <div role="group" aria-label={t('nav.language')} className="flex overflow-hidden rounded-full border border-brass/25">
             {LANGS.map((l) => (
-              <button
-                key={l.code}
-                onClick={() => i18n.changeLanguage(l.code)}
-                aria-pressed={i18n.resolvedLanguage === l.code}
-                className={`px-2.5 py-1 text-xs font-medium tracking-wider transition-colors ${
-                  i18n.resolvedLanguage === l.code ? 'bg-brass text-ink' : 'text-parchment/80 hover:bg-panel-2'
-                }`}
-              >
+              <button key={l.code} onClick={() => i18n.changeLanguage(l.code)} aria-pressed={i18n.resolvedLanguage === l.code} className={seg(i18n.resolvedLanguage === l.code)}>
                 {l.label}
               </button>
             ))}
           </div>
 
-          <div role="group" aria-label={t('nav.mode')} className="relative flex rounded-full border border-brass/30 p-0.5 text-xs">
+          <div role="group" aria-label={t('nav.mode')} className="flex overflow-hidden rounded-full border border-brass/25">
             {(['farmer', 'scientist'] as const).map((m) => (
-              <button
-                key={m}
-                onClick={() => set({ mode: m })}
-                aria-pressed={state.mode === m}
-                className={`relative z-10 rounded-full px-3 py-1 font-medium transition-colors ${
-                  state.mode === m ? 'bg-verdigris-light text-ink' : 'text-parchment/75 hover:text-parchment'
-                }`}
-              >
+              <button key={m} onClick={() => set({ mode: m })} aria-pressed={state.mode === m} className={seg(state.mode === m)}>
                 {t(`nav.${m}`)}
               </button>
             ))}
           </div>
 
-          <button onClick={onMethodology} className="rounded border border-brass/50 px-3 py-1 font-display text-sm text-brass hover:bg-brass/10">
+          <button
+            onClick={onMethodology}
+            data-action="methodology"
+            className="rounded-full border border-brass/50 px-4 py-1 font-display text-[11px] font-medium uppercase tracking-[0.18em] text-brass transition-all hover:bg-brass/10 hover:shadow-glow-soft"
+          >
             {t('nav.methodology')}
           </button>
         </div>

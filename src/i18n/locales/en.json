@@ -1,34 +1,124 @@
 {
-  "app": { "name": "Fihrist", "tagline": "An index of field, water and soil" },
-  "nav": { "methodology": "Methodology", "farmer": "Farmer", "scientist": "Scientist", "mode": "View mode", "language": "Language" },
-  "banner": { "text": "Fihrist supports, and does not replace, farmer and agronomist judgment.", "dismiss": "Dismiss" },
-  "panel": {
-    "location": "Location", "mapHint": "Click anywhere on the map, or choose a preset.",
-    "presets": "Presets", "field": "Your field", "soil": "Soil texture", "irrigation": "Irrigation", "rotation": "Current rotation",
-    "priorities": "What matters most to you", "climate": "Climate stress test",
-    "dT": "Warming", "dP": "Rainfall change"
+  "app": {
+    "name": "Fihrist",
+    "tagline": "An index of field, water and soil"
   },
-  "presets": { "gissar": "Gissar valley", "khatlon": "Khatlon / Panj", "balkh": "Balkh / Kunduz", "kansas": "Kansas (validation)" },
-  "soil": { "sand": "Sandy", "loam": "Loam", "clay": "Clay" },
-  "irrigation": { "rainfed": "Rainfed", "canal": "Canal / furrow", "drip": "Drip" },
+  "nav": {
+    "methodology": "Methodology",
+    "farmer": "Farmer",
+    "scientist": "Scientist",
+    "mode": "View mode",
+    "language": "Language"
+  },
+  "banner": {
+    "text": "Fihrist supports, and does not replace, farmer and agronomist judgment.",
+    "dismiss": "Dismiss"
+  },
+  "panel": {
+    "location": "Location",
+    "mapHint": "Click anywhere on the map, or choose a preset.",
+    "presets": "Presets",
+    "field": "Your field",
+    "soil": "Soil texture",
+    "irrigation": "Irrigation",
+    "rotation": "Current rotation",
+    "priorities": "What matters most to you",
+    "climate": "Climate stress test",
+    "dT": "Warming",
+    "dP": "Rainfall change"
+  },
+  "presets": {
+    "gissar": "Gissar valley",
+    "khatlon": "Khatlon / Panj",
+    "balkh": "Balkh / Kunduz",
+    "kansas": "Kansas (validation)"
+  },
+  "soil": {
+    "sand": "Sandy",
+    "loam": "Loam",
+    "clay": "Clay"
+  },
+  "irrigation": {
+    "rainfed": "Rainfed",
+    "canal": "Canal / furrow",
+    "drip": "Drip"
+  },
   "rotations": {
-    "wheat": "Continuous wheat", "wheatCotton": "Wheat – cotton",
-    "baseline": "Baseline", "waterSaving": "Water-saving", "regenerative": "Fihrist regenerative",
+    "wheat": "Continuous wheat",
+    "wheatCotton": "Wheat – cotton",
+    "baseline": "Baseline",
+    "waterSaving": "Water-saving",
+    "regenerative": "Fihrist regenerative",
     "seqBaseline": "Wheat → Wheat → Wheat",
     "seqWater": "Winter wheat → Chickpea → Sorghum",
     "seqRegen": "Winter wheat → Mung bean → Cereal + winter cover"
   },
-  "priorities": { "water": "Save water", "nitrogen": "Soil nitrogen", "erosion": "Less erosion", "organic": "Organic matter", "forage": "Animal forage", "income": "Income" },
-  "card": {
-    "rank": "Rank", "pending": "Awaiting simulation",
-    "waterDeficit": "Water deficit", "peopleFed": "People fed / ha", "soilN": "Final soil N", "protein": "Protein / ha", "trueProfit": "True profit",
-    "why": "Why suggested", "evidence": "NASA evidence", "benefits": "Expected benefits", "gaps": "Information gaps", "risks": "Local risks",
-    "placeholder": "Filled in once the engine runs on real NASA POWER data.",
-    "farmerPlaceholder": "Your answer appears here once we read the NASA data for your field."
+  "priorities": {
+    "water": "Save water",
+    "nitrogen": "Soil nitrogen",
+    "erosion": "Less erosion",
+    "organic": "Organic matter",
+    "forage": "Animal forage",
+    "income": "Income"
   },
-  "timeline": { "title": "The field year", "canopy": "Canopy", "bare": "Bare soil", "heat": "Heat", "frost": "Frost", "compound": "Compound stress", "placeholder": "Month-by-month cover and stress, computed in step 5." },
-  "charts": { "title": "Ten years ahead", "soilN": "Soil nitrogen", "water": "Water deficit", "uncertainty": "People fed, P10–P90", "placeholder": "Chart appears after simulation." },
-  "months": ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"],
-  "drawer": { "close": "Close", "methodologyBody": "Equations and sources will appear here (FAO-56 Penman–Monteith, Hargreaves, FAO-33 yield response, nitrogen balance)." },
-  "loading": "Consulting the sky…"
+  "card": {
+    "rank": "Rank",
+    "pending": "Awaiting NASA data",
+    "waterDeficit": "Water deficit",
+    "peopleFed": "People fed / ha",
+    "soilN": "Final soil N",
+    "protein": "Protein / ha",
+    "trueProfit": "True profit",
+    "why": "Why suggested",
+    "evidence": "NASA evidence",
+    "benefits": "Expected benefits",
+    "gaps": "Information gaps",
+    "risks": "Local risks",
+    "placeholder": "Filled in once the engine runs on real NASA POWER data.",
+    "farmerPlaceholder": "Your answer appears here once we read the NASA data for your field.",
+    "year": "Year {{n}}"
+  },
+  "timeline": {
+    "title": "The field year",
+    "canopy": "Canopy",
+    "bare": "Bare soil",
+    "heat": "Heat",
+    "frost": "Frost",
+    "compound": "Compound stress",
+    "placeholder": "Month-by-month cover and stress, computed in step 5."
+  },
+  "charts": {
+    "title": "Ten years ahead",
+    "soilN": "Soil nitrogen",
+    "water": "Water deficit",
+    "uncertainty": "People fed, P10–P90",
+    "placeholder": "Chart appears after simulation."
+  },
+  "months": [
+    "Jan",
+    "Feb",
+    "Mar",
+    "Apr",
+    "May",
+    "Jun",
+    "Jul",
+    "Aug",
+    "Sep",
+    "Oct",
+    "Nov",
+    "Dec"
+  ],
+  "drawer": {
+    "close": "Close",
+    "methodologyBody": "Equations and sources will appear here (FAO-56 Penman–Monteith, Hargreaves, FAO-33 yield response, nitrogen balance)."
+  },
+  "loading": "Consulting the sky…",
+  "crops": {
+    "wheat": "Winter wheat",
+    "cotton": "Cotton",
+    "chickpea": "Chickpea",
+    "sorghum": "Sorghum",
+    "mung": "Mung bean",
+    "cover": "Cereal + cover"
+  }
 }
