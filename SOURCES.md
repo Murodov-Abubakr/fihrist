@@ -1,18 +1,47 @@
 # Sources
 
 Every crop parameter, constant and dataset used by Project Fihrist is listed here with its source.
-Values marked **TODO verify** have not yet been checked against the primary source.
+Items marked **TODO verify** are assumptions or proxies that still need a primary source or local confirmation.
 
 ## Datasets
-| Dataset | Use | Resolution | Source |
-|---|---|---|---|
-| NASA POWER (community=AG) | T2M, T2M_MAX, T2M_MIN, PRECTOTCORR, ALLSKY_SFC_SW_DWN, WS2M, RH2M | ~0.5° × 0.625° (meteorology, MERRA-2), 1° (solar, CERES) | https://power.larc.nasa.gov/ |
+| Dataset | Use | Resolution | Access | Source |
+|---|---|---|---|---|
+| NASA POWER daily point API v2, community=AG | T2M_MAX, T2M_MIN, PRECTOTCORR, ALLSKY_SFC_SW_DWN, WS2M, RH2M, 2001-01-01 to 2024-12-31 | Meteorology: MERRA-2, 0.5° × 0.625° (~50 km); radiation: CERES SYN1deg, 1° | Live (browser, CSV) and prefetched preset JSON (`scripts/prefetch_power.py`) | https://power.larc.nasa.gov/docs/services/api/temporal/daily/ |
 
-## Equations and constants
-_Added in step 2 (engine)._
+Notes found while building (2026-11-14):
+- POWER **monthly** endpoint `T2M_MAX`/`T2M_MIN` are monthly *extremes* (highest/lowest daily value), not mean daily max/min; Fihrist therefore derives all monthly values from the **daily** endpoint.
+- POWER elevation is the MERRA-2 grid-cell mean (e.g. Gissar cell 1327 m, while the Dushanbe valley floor is lower); used for atmospheric pressure in Penman–Monteith and listed as an information gap.
 
-## Crop parameters
-_Added in step 2/3 (FAO-56 Table 12, USDA FoodData Central, FAO GAEZ)._
+## Equations
+| Quantity | Equation | Source |
+|---|---|---|
+| Extraterrestrial radiation Ra | FAO-56 Eqs. 21–25 (from latitude, day of year) | Allen et al. 1998, FAO Irrigation and Drainage Paper 56 |
+| Daylight hours, clear-sky radiation | FAO-56 Eqs. 34, 37 | FAO-56 |
+| Saturation / actual vapour pressure, Δ, P, γ | FAO-56 Eqs. 7, 8, 11, 12, 13, 17, 19 | FAO-56 |
+| Net radiation | FAO-56 Eqs. 38–40 (albedo 0.23, σ = 4.903e-9) | FAO-56 |
+| Rs/Rso limits [0.3, 1.0] | | ASCE-EWRI (2005) Standardized Reference ET Equation |
+| Reference ET0 (primary) | FAO-56 Penman–Monteith, Eq. 6, daily, G = 0 (Eq. 42) | FAO-56 |
+| Reference ET0 (cross-check) | Hargreaves, FAO-56 Eq. 52 | FAO-56; Hargreaves & Samani 1985 |
+| Daily RHmin estimate | RHmin = ea / e°(Tmax) (approach of FAO-56 Eq. 63) | FAO-56 |
+| Crop coefficient curve | FAO-56 Eq. 66, Fig. 25 | FAO-56 |
+| Kc mid/end climate adjustment | FAO-56 Eqs. 62, 65 | FAO-56 |
+| Effective rainfall | USDA Soil Conservation Service method (monthly): P(125 − 0.2P)/125 for P ≤ 250 mm; 125 + 0.1P above | FAO CROPWAT 8.0; Smith 1992 (FAO I&D Paper 46) |
+| Water deficit | 10 · Σ max(0, ETc − Peff), monthly, m³/ha | CLAUDE.md §5 (1 mm over 1 ha = 10 m³) |
+| Growing degree-days | Σ max(0, (Tmax + Tmin)/2 − Tbase) | McMaster & Wilhelm 1997 |
+| Frost day | Tmin ≤ 0 °C | CLAUDE.md §5 |
+
+Unit tests reproduce FAO-56 Examples 2, 8, 9, 18 and Annex 2 Table 2.3 (`src/engine/engine.test.ts`).
+
+## Crop parameters (`src/engine/crops.ts`)
+Verified against the FAO-56 web edition, Tables 11 and 12 (https://www.fao.org/4/x0490e/x0490e0b.htm), on 2026-11-14.
+
+| Crop | Kc ini / mid / end | Stages (d) | Height | Tbase | Source / notes |
+|---|---|---|---|---|---|
+| Winter wheat | 0.7 / 1.15 / 0.25 | 30/140/40/30 | 1.0 m | 0 °C | T12 non-frozen soils (frozen: 0.4); Kc end 0.25–0.4 (0.4 hand-harvest); T11 Mediterranean Nov row. Tbase: McMaster & Wilhelm 1997. **TODO verify** sowing date 15 Oct; dormancy in frozen winters |
+| Cotton | 0.35 / 1.175 / 0.6 | 30/50/60/55 | 1.35 m | 15.6 °C | T12 (Fibre group Kc ini; ranges → midpoints); T11 Egypt/Pakistan row. **TODO verify** Tbase source (DD60 convention) |
+| Chickpea | 0.4 / 1.00 / 0.35 | 20/30/40/20 | 0.4 m | 0 °C | T12 (Legumes group Kc ini). **TODO verify**: T11 has no chickpea row — dry-bean stages used as proxy; Tbase source |
+| Sorghum (grain) | 0.3 / 1.05 / 0.55 | 20/35/45/30 | 1.5 m | 10 °C | T12 (Cereals group Kc ini; mid = midpoint of 1.00–1.10); T11 Arid Region row. **TODO verify** Tbase source |
+| Mung bean (= green gram) | 0.4 / 1.05 / 0.35 | 20/30/30/20 | 0.4 m | 10 °C | T12 "Green Gram and Cowpeas" (dry harvest); T11 row prints total 110 d but stages sum to 100 d. **TODO verify** Tbase source |
 
 ## Map and UI assets
 | Asset | Source / licence |

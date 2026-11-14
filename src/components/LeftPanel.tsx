@@ -3,6 +3,8 @@ import { PRESETS } from '../data/presets';
 import { PRIORITY_KEYS, useStore, type Irrigation, type PriorityKey, type Soil } from '../state';
 import { FieldMap } from './FieldMap';
 import { Icon, type IconName } from './icons';
+import { DataStatus } from './DataStatus';
+import type { ClimateState } from '../data/useClimate';
 
 const PRIORITY_ICONS: Record<PriorityKey, IconName> = { water: 'water', nitrogen: 'nitrogen', erosion: 'erosion', organic: 'organic', forage: 'forage', income: 'income' };
 
@@ -58,7 +60,7 @@ function Slider({ label, value, min, max, step, format, onChange, icon }: {
 /** Farmer mode shows three pips instead of a number */
 const pips = (v: number) => (v >= 67 ? '●●●' : v >= 34 ? '●●○' : '●○○');
 
-export function LeftPanel() {
+export function LeftPanel({ climate, onRetry }: { climate: ClimateState; onRetry: () => void }) {
   const { t } = useTranslation();
   const { state, set } = useStore();
   const sci = state.mode === 'scientist';
@@ -67,6 +69,7 @@ export function LeftPanel() {
     <aside className="stone space-y-6 p-4 sm:p-5">
       <Section title={t('panel.location')}>
         <FieldMap />
+        <DataStatus state={climate} onRetry={onRetry} />
         <div className="flex items-center justify-between gap-2 text-xs">
           <span className="text-slate">{t('panel.mapHint')}</span>
           <span className="num shrink-0 rounded-full border border-brass/60 px-2.5 py-0.5 text-parchment">

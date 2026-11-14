@@ -120,5 +120,15 @@
     "sorghum": "Sorghum",
     "mung": "Mung bean",
     "cover": "Cereal + cover"
+  },
+  "data": {
+    "loading": "Reading NASA POWER data…",
+    "preset": "Preset file",
+    "cache": "Cached",
+    "live": "Live from NASA",
+    "error": "NASA POWER is unavailable right now. Try again, or choose a preset.",
+    "days": "days",
+    "grid": "grid elevation",
+    "retry": "Try again"
   }
 }

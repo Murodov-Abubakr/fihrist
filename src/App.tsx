@@ -9,6 +9,7 @@ import { LeftPanel } from './components/LeftPanel';
 import { RotationCard, type RotationId } from './components/RotationCard';
 import { Timeline, ChartsShell } from './components/Timeline';
 import { Drawer } from './components/Drawer';
+import { useClimate } from './data/useClimate';
 
 export default function App() {
   const { t } = useTranslation();
@@ -17,6 +18,7 @@ export default function App() {
   const store = useMemo(() => ({ state, set }), [state, set]);
   const [methodOpen, setMethodOpen] = useState(false);
   const closeMethod = useCallback(() => setMethodOpen(false), []);
+  const { state: climate, retry } = useClimate(state.lat, state.lon, state.presetId);
 
   // Ranking is a placeholder order until the engine produces scores (step 3).
   const cards: RotationId[] = ['baseline', 'waterSaving', 'regenerative'];
@@ -29,7 +31,7 @@ export default function App() {
       <TopBar onMethodology={() => setMethodOpen(true)} />
       <Banner />
       <main className="mx-auto grid max-w-[1600px] gap-6 px-4 py-6 sm:px-6 lg:grid-cols-[minmax(320px,380px)_1fr]">
-        <LeftPanel />
+        <LeftPanel climate={climate} onRetry={retry} />
         <div className="relative min-w-0 space-y-8">
           {/* huge faded section word behind the content */}
           <div aria-hidden className="pointer-events-none absolute -top-6 left-0 right-0 -z-0 select-none overflow-hidden">

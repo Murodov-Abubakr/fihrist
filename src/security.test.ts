@@ -61,7 +61,8 @@ describe('A02 secrets & transport', () => {
   });
 
   it('every external URL in app source is https', () => {
-    const src = code.filter((f) => f.includes(`${join(ROOT, 'src')}`) || f.endsWith('index.html'));
+    // test files are excluded: they deliberately contain hostile URLs (SSRF payloads) as fixtures
+    const src = code.filter((f) => (f.includes(`${join(ROOT, 'src')}`) && !f.endsWith('.test.ts')) || f.endsWith('index.html'));
     const insecure = src.flatMap((f) => (readFileSync(f, 'utf8').match(/http:\/\/(?!localhost|127\.0\.0\.1|www\.w3\.org)[^\s'"`)]+/g) ?? []).map((u) => `${relative(ROOT, f)}: ${u}`));
     expect(insecure).toEqual([]);
   });

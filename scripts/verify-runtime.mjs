@@ -46,7 +46,21 @@ const click = async (text) => {
   await new Promise((r) => setTimeout(r, 400));
 };
 
-for (const p of ['Khatlon / Panj', 'Balkh / Kunduz', 'Kansas (validation)', 'Gissar valley']) await click(p);
+const statusText = () => page.evaluate(() => [...document.querySelectorAll('[role="status"],[role="alert"]')].map((e) => e.textContent).join(' | '));
+const waitStatus = async (needle, ms, label) => {
+  try {
+    await page.waitForFunction((n) => [...document.querySelectorAll('[role="status"],[role="alert"]')].some((e) => e.textContent?.includes(n)), { timeout: ms }, needle);
+  } catch {
+    problems.push(`${label}: expected "${needle}", got "${await statusText()}"`);
+  }
+};
+
+// Preset data file loads and validates in the browser
+await waitStatus('Preset file', 8000, 'preset climate data');
+for (const p of ['Khatlon / Panj', 'Balkh / Kunduz', 'Kansas (validation)', 'Gissar valley']) {
+  await click(p);
+  await waitStatus('Preset file', 8000, `preset ${p}`);
+}
 await click('Scientist');
 const metrics = await page.evaluate(() => document.querySelectorAll('dl dt').length);
 if (metrics !== 15) problems.push(`scientist mode: expected 15 metric labels, got ${metrics}`);
@@ -77,6 +91,12 @@ await new Promise((r) => setTimeout(r, 800));
 const coords = await page.evaluate(() => [...document.querySelectorAll('.num')].map((e) => e.textContent).find((t) => /°\s*[,/]\s*-?\d/.test(t ?? '')));
 const m = coords?.match(/(-?\d+\.\d+)°\s*[,/]\s*(-?\d+\.\d+)°/);
 if (!m || Math.abs(+m[1]) > 90 || Math.abs(+m[2]) > 180) problems.push(`map click produced bad coordinates: ${coords}`);
+
+// Clicked point → live NASA POWER request through the CSP (connect-src) → parsed + validated
+const t0 = Date.now();
+await waitStatus('Live from NASA', 15000, 'live NASA POWER fetch');
+const liveMs = Date.now() - t0;
+console.log(`live NASA POWER fetch + parse: ${liveMs} ms -> ${await statusText()}`);
 
 // Tampered storage: XSS payload as language must fall back to en
 await page.evaluate(() => localStorage.setItem('fihrist.lang', '"><img src=x onerror=alert(1)>'));
