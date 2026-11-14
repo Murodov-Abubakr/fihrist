@@ -49,7 +49,7 @@ node scripts/verify-runtime.mjs        # headers served, 0 CSP violations, 0 con
                                        # tampered localStorage rejected
 ```
 
-## Open decisions (need project-owner input)
-- **OPEN-1** Backend: FastAPI (security prompt) vs Cloudflare Pages Functions (PROMPT.md). Current build follows PROMPT.md.
-- **OPEN-2** "BLiSS / Martian carrying capacity" and "residue energy" outputs conflict with CLAUDE.md (space framing in closing section only; no crop-to-fuel).
-- **OPEN-3** Evidence datasets: SMAP / GPM / ECOSTRESS / SRTM are cited in the rubric list, but only datasets actually fetched will be shown as evidence.
+## Decisions (project owner, 2026-11-14)
+- **D-1 Backend:** both. Cloudflare Pages + Functions is the live app. FastAPI runs **offline only** (preset prefetch), never in the live path. When FastAPI code is added it must still meet A01/A03/A04/A05/A10: Pydantic range validation, `docs_url=None` in production, ≤10 s upstream timeouts, outbound host allowlist (`power.larc.nasa.gov`, Planetary Computer STAC), no redirects to private IP ranges.
+- **D-2 Space framing:** closing section / README only. No BLiSS output in the UI, no residue-energy claims.
+- **D-3 Datasets:** NASA POWER (live) + MODIS NDVI, SMAP, SRTM (presets, prefetched), fetched in priority order. If one fails, the rest continue and the missing one is shown as an information gap, never as evidence.
