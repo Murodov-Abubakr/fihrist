@@ -9,8 +9,11 @@ import { LeftPanel } from './components/LeftPanel';
 import { RotationCard, type RotationId } from './components/RotationCard';
 import { Timeline, ChartsShell } from './components/Timeline';
 import { Drawer } from './components/Drawer';
+import { ComputeGridPanel } from './components/ComputeGridPanel';
 import { useClimate } from './data/useClimate';
 import { ROTATION_IDS, useRotations } from './data/useRotations';
+import { useDerived } from './data/useDerived';
+import { useMonteCarlo } from './data/useMonteCarlo';
 
 export default function App() {
   const { t } = useTranslation();
@@ -22,9 +25,13 @@ export default function App() {
   const { state: climate, retry } = useClimate(state.lat, state.lon, state.presetId);
 
   const series = climate.status === 'ready' ? climate.result.series : null;
-  const analysis = useRotations(series, state.irrigation, state.rotation, state.priorities);
+  // climate-stress sliders applied once (debounced), shared by the replay and the Monte Carlo
+  const derived = useDerived(series, state.dT, state.dP);
+  const analysis = useRotations(derived, state.irrigation, state.rotation, state.priorities);
+  const mc = useMonteCarlo(derived, state.irrigation, state.rotation, analysis?.region ?? null);
   // Cards are ordered by the farmer's priorities; canonical order until results exist.
   const cards: RotationId[] = analysis?.order ?? ROTATION_IDS;
+  const stressed = !!analysis && (analysis.dT !== 0 || analysis.dP !== 0);
 
   return (
     <StoreContext.Provider value={store}>
@@ -42,11 +49,18 @@ export default function App() {
               {t(`nav.${state.mode}`)}
             </span>
           </div>
-          <div className="relative grid gap-x-6 gap-y-8 pt-10 md:grid-cols-2 xl:grid-cols-3">
+          {stressed && (
+            <div role="status" className="relative z-10 inline-flex items-center gap-2 rounded-full border border-terracotta/70 bg-terracotta/15 px-4 py-1.5 text-xs text-terracotta-light">
+              <span className="h-1.5 w-1.5 rounded-full bg-terracotta-light" />
+              {t('band.stress', { dT: `${analysis!.dT >= 0 ? '+' : ''}${analysis!.dT.toFixed(1)}`, dP: `${analysis!.dP > 0 ? '+' : ''}${analysis!.dP}` })}
+            </div>
+          )}
+          <div className={`relative grid gap-x-6 gap-y-8 md:grid-cols-2 xl:grid-cols-3 ${stressed ? 'pt-2' : 'pt-10'}`}>
             {cards.map((id, i) => (
-              <RotationCard key={id} id={id} total={cards.length} index={i} analysis={analysis} />
+              <RotationCard key={id} id={id} total={cards.length} index={i} analysis={analysis} mc={mc.status === 'done' ? mc.summary : null} />
             ))}
           </div>
+          {state.mode === 'scientist' && <div className="relative"><ComputeGridPanel mc={mc} /></div>}
           <div className="relative"><Timeline /></div>
           <div className="relative"><ChartsShell /></div>
         </div>

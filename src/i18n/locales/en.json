@@ -203,5 +203,24 @@
     "error": "Place search is unavailable right now — click the map or choose a preset.",
     "coords": "Coordinates you typed",
     "attribution": "Search: Photon · © OpenStreetMap contributors"
+  },
+  "grid": {
+    "title": "Fihrist Compute Grid",
+    "running": "Running {{runs}} plausible 12-year futures…",
+    "done": "{{runs}} futures · {{batches}} batches · {{ms}} ms",
+    "tables": "season tables built in {{ms}} ms",
+    "edge": "Cloudflare edge",
+    "local": "local fallback",
+    "failed": "failed",
+    "pending": "waiting",
+    "how": "Each future is 12 years assembled from real NASA POWER years 2001–2023 drawn at random; all three rotations face the same draws.",
+    "cpuNote": "Cloudflare Workers freeze timers during execution, so edge rows show round-trip time; local rows show measured worker time.",
+    "error": "Uncertainty bands unavailable: {{msg}}"
+  },
+  "band": {
+    "label": "P10 · P50 · P90 over {{runs}} futures",
+    "farmer": "In a bad decade (1 in 10): about {{people}} people per hectare and {{water}} m³ of water a year.",
+    "farmerIrr": "In a dry decade (1 in 10) the canal water need rises to about {{water}} m³ a year.",
+    "stress": "Climate stress test applied: {{dT}} °C, {{dP}} % rain"
   }
 }

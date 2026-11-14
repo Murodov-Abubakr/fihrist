@@ -67,7 +67,7 @@ export function rotationDefs(baseline: 'wheat' | 'wheatCotton'): Record<Rotation
   };
 }
 
-const paramsOf = (c: PlantingCrop): CropParams => (c === 'cover' ? CROPS.wheat : CROPS[c]);
+export const paramsOf = (c: PlantingCrop): CropParams => (c === 'cover' ? CROPS.wheat : CROPS[c]);
 
 export interface SeasonResult {
   crop: PlantingCrop;
@@ -130,16 +130,84 @@ function quantile(sorted: number[], q: number): number {
   return sorted[lo] + (sorted[hi] - sorted[lo]) * (pos - lo);
 }
 
+/**
+ * One crop season's water balance and yield. Shared by the deterministic replay and the Monte Carlo
+ * season tables so both use identical physics.
+ */
+export function seasonWater(
+  s: DailySeries, dd: DailyDerived, rainByMonth: Map<string, number>, daysInMonth: (y: number, m: number) => number,
+  crop: PlantingCrop, sowIdx: number, len: number, irrigated: boolean, region: RegionId,
+): { etc: number; eta: number; netIrrigation: number; et0: number; rain: number; yieldT: number } {
+  const params = paramsOf(crop);
+  const months = new Map<string, { y: number; m: number; etc: number; days: number }>();
+  let et0 = 0;
+  let rain = 0;
+  for (let k = 0; k < len; k++) {
+    const i = sowIdx + k;
+    const d = dd.dates[i];
+    const key = `${d.y}-${d.m}`;
+    const row = months.get(key) ?? { y: d.y, m: d.m, etc: 0, days: 0 };
+    row.etc += kcOnDay(params, k) * dd.et0[i];
+    row.days++;
+    months.set(key, row);
+    et0 += dd.et0[i];
+    rain += s.prcp[i];
+  }
+  let etc = 0;
+  let eta = 0;
+  let netIrr = 0;
+  for (const [key, row] of months) {
+    const peffShare = effectiveRainUSDA(rainByMonth.get(key) ?? 0) * (row.days / daysInMonth(row.y, row.m));
+    etc += row.etc;
+    eta += Math.min(row.etc, peffShare);
+    netIrr += Math.max(0, row.etc - peffShare);
+  }
+  if (irrigated) eta = etc;
+  let yieldT = 0;
+  if (crop !== 'cover') {
+    const ym = YM[region][crop].value;
+    yieldT = etc > 0 ? ym * Math.max(0, 1 - KY[crop].value * (1 - eta / etc)) : 0;
+  }
+  return { etc, eta, netIrrigation: irrigated ? netIrr : 0, et0, rain, yieldT };
+}
+
+/** Food, nitrogen and money from one harvested season (cover crop → zeros). */
+export function seasonEconomics(crop: PlantingCrop, yieldT: number, region: RegionId) {
+  if (crop === 'cover') return { kcal: 0, proteinKg: 0, nRemovedKg: 0, nFixedKg: 0, revenueUsd: 0 };
+  const kg = yieldT * 1000;
+  const nut = NUTRITION[crop];
+  const proteinKg = (kg * nut.protein.value) / 100;
+  const fixP = N_FIXED[crop];
+  return {
+    kcal: kg * nut.kcal.value * 10, // kcal/100 g → kcal/kg × 10
+    proteinKg,
+    nRemovedKg: proteinKg / N_TO_PROTEIN,
+    nFixedKg: fixP ? fixP.value * (yieldT / YM[region][crop].value) : 0,
+    revenueUsd: yieldT * PRICE_USD_T[crop].value,
+  };
+}
+
+/** Monthly rain totals and actual day counts per "y-m" (works for real and synthetic calendars). */
+export function monthTables(s: DailySeries, dd: DailyDerived) {
+  const rainByMonth = new Map<string, number>();
+  const dayCount = new Map<string, number>();
+  dd.dates.forEach((d, i) => {
+    const k = `${d.y}-${d.m}`;
+    rainByMonth.set(k, (rainByMonth.get(k) ?? 0) + s.prcp[i]);
+    dayCount.set(k, (dayCount.get(k) ?? 0) + 1);
+  });
+  // whole calendar month length (partial months at series edges still use the full length)
+  const daysInMonth = (y: number, m: number) => new Date(Date.UTC(y, m, 0)).getUTCDate();
+  return { rainByMonth, dayCount, daysInMonth };
+}
+
 export function simulateRotation(s: DailySeries, dd: DailyDerived, def: RotationDef, opt: SimOptions): RotationResult {
   const fromYear = opt.fromYear ?? 2015;
   const toYear = opt.toYear ?? 2024;
   const n = s.tmax.length;
   const irrigated = opt.irrigation !== 'rainfed';
 
-  // monthly rain and day counts, keyed "y-m"
-  const rainByMonth = new Map<string, number>();
-  dd.dates.forEach((d, i) => rainByMonth.set(`${d.y}-${d.m}`, (rainByMonth.get(`${d.y}-${d.m}`) ?? 0) + s.prcp[i]));
-  const daysInMonth = (y: number, m: number) => new Date(Date.UTC(y, m, 0)).getUTCDate();
+  const { rainByMonth, daysInMonth } = monthTables(s, dd);
   const idxOf = new Map<string, number>();
   dd.dates.forEach((d, i) => idxOf.set(`${d.y}-${d.m}-${d.d}`, i));
 
@@ -152,46 +220,14 @@ export function simulateRotation(s: DailySeries, dd: DailyDerived, def: Rotation
       const y = cyc + p.yearOffset;
       const sowIdx = idxOf.get(`${y}-${p.plant[0]}-${p.plant[1]}`);
       if (sowIdx === undefined) continue;
-      const params = paramsOf(p.crop);
-      const len = p.lengthDays ?? seasonLength(params);
+      const len = p.lengthDays ?? seasonLength(paramsOf(p.crop));
       if (sowIdx + len > n) continue;
       const harvestYear = dd.dates[sowIdx + len - 1].y;
       for (let k = 0; k < len; k++) occupied[sowIdx + k] = 1;
       if (harvestYear < fromYear || harvestYear > toYear) continue;
 
-      // season water balance by calendar month
-      const months = new Map<string, { y: number; m: number; etc: number; days: number }>();
-      let et0 = 0;
-      let rain = 0;
-      for (let k = 0; k < len; k++) {
-        const i = sowIdx + k;
-        const d = dd.dates[i];
-        const key = `${d.y}-${d.m}`;
-        const row = months.get(key) ?? { y: d.y, m: d.m, etc: 0, days: 0 };
-        row.etc += kcOnDay(params, k) * dd.et0[i];
-        row.days++;
-        months.set(key, row);
-        et0 += dd.et0[i];
-        rain += s.prcp[i];
-      }
-      let etc = 0;
-      let eta = 0;
-      let netIrr = 0;
-      for (const [key, row] of months) {
-        const peffShare = effectiveRainUSDA(rainByMonth.get(key) ?? 0) * (row.days / daysInMonth(row.y, row.m));
-        etc += row.etc;
-        eta += Math.min(row.etc, peffShare);
-        netIrr += Math.max(0, row.etc - peffShare);
-      }
-      if (irrigated) eta = etc;
-
-      let yieldT = 0;
-      if (p.crop !== 'cover') {
-        const ym = YM[opt.region][p.crop].value;
-        const ky = KY[p.crop].value;
-        yieldT = etc > 0 ? ym * Math.max(0, 1 - ky * (1 - eta / etc)) : 0;
-      }
-      seasons.push({ crop: p.crop, sowIdx, harvestYear, days: len, etc, eta, netIrrigation: irrigated ? netIrr : 0, et0, rain, yieldT });
+      const w = seasonWater(s, dd, rainByMonth, daysInMonth, p.crop, sowIdx, len, irrigated, opt.region);
+      seasons.push({ crop: p.crop, sowIdx, harvestYear, days: len, ...w });
     }
   }
 
@@ -203,14 +239,12 @@ export function simulateRotation(s: DailySeries, dd: DailyDerived, def: Rotation
     let kcal = 0, proteinKg = 0, revenue = 0, nRem = 0, nFix = 0, netIrr = 0, unmet = 0, forage = 0;
     for (const x of ys) {
       if (x.crop === 'cover') { forage++; unmet += irrigated ? 0 : 10 * (x.etc - x.eta); netIrr += x.netIrrigation; continue; }
-      const kg = x.yieldT * 1000;
-      const nut = NUTRITION[x.crop];
-      kcal += kg * nut.kcal.value * 10; // kcal/100 g → kcal/kg ×10
-      proteinKg += (kg * nut.protein.value) / 100;
-      nRem += (kg * nut.protein.value) / 100 / N_TO_PROTEIN;
-      const fixP = N_FIXED[x.crop];
-      if (fixP) nFix += fixP.value * (x.yieldT / YM[opt.region][x.crop].value);
-      revenue += x.yieldT * PRICE_USD_T[x.crop].value;
+      const e = seasonEconomics(x.crop, x.yieldT, opt.region);
+      kcal += e.kcal;
+      proteinKg += e.proteinKg;
+      nRem += e.nRemovedKg;
+      nFix += e.nFixedKg;
+      revenue += e.revenueUsd;
       netIrr += x.netIrrigation;
       unmet += irrigated ? 0 : 10 * (x.etc - x.eta);
       if (x.crop === 'wheat' || x.crop === 'sorghum') forage++;

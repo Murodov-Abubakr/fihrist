@@ -1,5 +1,6 @@
 import { useMemo } from 'react';
-import { deriveDaily, monthlyClimatology, type DailySeries, type MonthClimate } from '../engine/climate.ts';
+import { monthlyClimatology, type MonthClimate } from '../engine/climate.ts';
+import type { Derived } from './useDerived.ts';
 import { regionOf, type RegionId } from '../engine/params.ts';
 import { rankRotations, type PriorityKey, type RankedRotation } from '../engine/ranking.ts';
 import { rotationDefs, simulateRotation, type Irrigation, type RotationId, type RotationResult } from '../engine/rotation.ts';
@@ -20,13 +21,16 @@ export interface Analysis {
   region: RegionId;
   outOfRegion: boolean;
   irrigation: Irrigation;
+  /** climate-stress deltas applied (°C, % rain) */
+  dT: number;
+  dP: number;
 }
 
 /** Heavy part (depends only on weather + field settings). Ranking is recomputed separately on slider moves. */
-function useSimulation(series: DailySeries | null, irrigation: Irrigation, baseline: 'wheat' | 'wheatCotton') {
-  const derived = useMemo(() => (series ? { dd: deriveDaily(series) } : null), [series]);
+function useSimulation(derived: Derived | null, irrigation: Irrigation, baseline: 'wheat' | 'wheatCotton') {
   return useMemo(() => {
-    if (!series || !derived) return null;
+    if (!derived) return null;
+    const series = derived.series;
     const { region, outOfRegion } = regionOf(series.lat, series.lon);
     const defs = rotationDefs(baseline);
     const results = Object.fromEntries(
@@ -40,12 +44,12 @@ function useSimulation(series: DailySeries | null, irrigation: Irrigation, basel
       et0: sum((m) => m.et0), rain: sum((m) => m.rain), peff: sum((m) => m.peff),
       julyTmax: months[series.lat >= 0 ? 6 : 0].tmax, frostDays: sum((m) => m.frostDays), elevation: series.elevation, months,
     };
-    return { results, climate, region, outOfRegion };
-  }, [series, derived, irrigation, baseline]);
+    return { results, climate, region, outOfRegion, dT: derived.dT, dP: derived.dP };
+  }, [derived, irrigation, baseline]);
 }
 
-export function useRotations(series: DailySeries | null, irrigation: Irrigation, baseline: 'wheat' | 'wheatCotton', priorities: Record<PriorityKey, number>): Analysis | null {
-  const sim = useSimulation(series, irrigation, baseline);
+export function useRotations(derived: Derived | null, irrigation: Irrigation, baseline: 'wheat' | 'wheatCotton', priorities: Record<PriorityKey, number>): Analysis | null {
+  const sim = useSimulation(derived, irrigation, baseline);
   return useMemo(() => {
     if (!sim) return null;
     const list = rankRotations(ROTATION_IDS.map((id) => sim.results[id]), priorities, irrigation);

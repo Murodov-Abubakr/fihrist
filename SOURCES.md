@@ -69,6 +69,15 @@ Quality: **sourced** = from the cited source for this crop/region · **proxy** =
 | Irrigation efficiency canal / drip | 0.50 / 0.90 | sourced / TODO | FAO Water Report: traditional schemes "typically less than 50 percent"; drip value commonly cited |
 | People fed | kcal / (2,200 × 365) | — | CLAUDE.md §5 eq. 9 |
 
+## Monte Carlo and climate stress (`src/engine/montecarlo.ts`)
+| Item | Choice | Rationale |
+|---|---|---|
+| Weather futures | Year bootstrap: each synthetic sowing year draws one real NASA POWER year (2001–2023) with replacement; seasons sown in the same synthetic year share it; all rotations share the draws (common random numbers) | Keeps real, internally consistent seasonal weather (CLAUDE.md §5 eq. 12: "sample residuals from real years where possible") |
+| Horizon | 12 years (CLAUDE.md says 10) | Whole cycles of the 1-, 2- and 3-year rotations; avoids cycle-phase bias |
+| Runs | 2,400 in 12 batches of 200 | — |
+| Climate sliders | Delta change: daily Tmax/Tmin + ΔT, daily rain × (1 + ΔP); RH, wind, radiation unchanged | Standard delta-change method; RH held constant so vapour pressure rises with warming |
+| Not sampled | Parameter uncertainty (yields, prices, fixation); irrigation water availability (canal assumed to deliver full demand) | Listed as information gaps |
+
 Not modelled yet (shown as information gaps): soil-water storage between months, nitrogen losses, wheat winter dormancy, farm costs other than replacing nitrogen.
 
 ## Map and UI assets

@@ -9,6 +9,7 @@ import type { Analysis } from '../data/useRotations';
 import type { RotationId, RotationResult } from '../engine/rotation';
 import type { PriorityKey } from '../engine/ranking';
 import type { Param } from '../engine/params';
+import { MC_LIMITS, type Band, type McSummary } from '../engine/montecarlo';
 
 export type { RotationId };
 type Crop = 'wheat' | 'cotton' | 'chickpea' | 'sorghum' | 'mung' | 'cover';
@@ -69,7 +70,13 @@ function Section({ id, open, onToggle, children }: { id: (typeof SECTIONS)[numbe
   );
 }
 
-export function RotationCard({ id, index, total, analysis }: { id: RotationId; index: number; total: number; analysis: Analysis | null }) {
+/** "P10 x · P90 y", or null when the band has no meaningful spread (e.g. irrigated food output). */
+const bandText = (b: Band, d: number, scale = 1) =>
+  Math.abs(b.p90 - b.p10) <= Math.max(1e-6, Math.abs(b.p50) * 0.005)
+    ? null
+    : `P10 ${(b.p10 * scale).toLocaleString('en-US', { maximumFractionDigits: d })} · P90 ${(b.p90 * scale).toLocaleString('en-US', { maximumFractionDigits: d })}`;
+
+export function RotationCard({ id, index, total, analysis, mc }: { id: RotationId; index: number; total: number; analysis: Analysis | null; mc: McSummary | null }) {
   const { t, i18n } = useTranslation();
   const { state } = useStore();
   const [open, setOpen] = useState<string | null>(null);
@@ -177,15 +184,21 @@ export function RotationCard({ id, index, total, analysis }: { id: RotationId; i
     };
   }
 
+  // With Monte Carlo results, headline values are P50 over all plausible futures and carry P10/P90;
+  // before that (or if it fails) they are the deterministic 2015–2024 replay.
+  const m = mc?.[id];
+  const Y = MC_LIMITS.decadeYears;
   const metrics = r
     ? [
-        { key: rainfed ? 'waterRain' : 'waterIrr', v: waterOf(r, !!rainfed), d: 0, unit: 'm³/ha' },
-        { key: 'peopleFed', v: r.peopleFedP.p50, d: 1, unit: `P10 ${r.peopleFedP.p10.toFixed(1)} · P90 ${r.peopleFedP.p90.toFixed(1)}`, wide: true },
-        { key: 'nBalance', v: r.mean.nFixedKg - r.mean.nRemovedKg, d: 0, unit: 'kg N/ha' },
-        { key: 'protein', v: r.mean.proteinKg, d: 0, unit: 'kg/ha' },
-        { key: 'trueProfit', v: r.mean.trueProfitUsd, d: 0, unit: 'USD/ha' },
+        { key: rainfed ? 'waterRain' : 'waterIrr', v: m ? m.waterM3.p50 : waterOf(r, !!rainfed), d: 0, unit: 'm³/ha', band: m ? bandText(m.waterM3, 0) : null },
+        { key: 'peopleFed', v: m ? m.peopleFed.p50 : r.peopleFedP.p50, d: 1, unit: '', band: m ? bandText(m.peopleFed, 1) : `P10 ${r.peopleFedP.p10.toFixed(1)} · P90 ${r.peopleFedP.p90.toFixed(1)}`, wide: true },
+        { key: 'nBalance', v: m ? m.nBalanceKg.p50 / Y : r.mean.nFixedKg - r.mean.nRemovedKg, d: 0, unit: 'kg N/ha', band: m ? bandText(m.nBalanceKg, 0, 1 / Y) : null },
+        { key: 'protein', v: m ? m.proteinKg.p50 : r.mean.proteinKg, d: 0, unit: 'kg/ha', band: m ? bandText(m.proteinKg, 0) : null },
+        { key: 'trueProfit', v: m ? m.profitUsd.p50 : r.mean.trueProfitUsd, d: 0, unit: 'USD/ha', band: m ? bandText(m.profitUsd, 0) : null },
       ]
     : null;
+  const headPeople = m ? m.peopleFed.p50 : r?.peopleFedP.p50 ?? 0;
+  const headWater = m ? m.waterM3.p50 : r ? waterOf(r, !!rainfed) : 0;
 
   return (
     <motion.article layout="position" className="flex flex-col"
@@ -209,6 +222,7 @@ export function RotationCard({ id, index, total, analysis }: { id: RotationId; i
           <p className="px-5 py-4 text-[15px] leading-relaxed text-slate">{t('card.loadingSim')}</p>
         ) : sci ? (
           <dl className="grid grid-cols-2 gap-x-4 gap-y-3 px-5 py-4">
+            {mc && <p className="col-span-2 -mb-1 text-[10px] uppercase tracking-[0.14em] text-slate">{t('band.label', { runs: mc.runs.toLocaleString('en-US') })}</p>}
             {metrics!.map((m) => (
               <div key={m.key} className={m.wide ? 'col-span-2' : ''}>
                 <dt className="text-[10px] uppercase tracking-[0.16em] text-slate">{t(`card.${m.key}`)} {t('card.perYr')}</dt>
@@ -216,6 +230,7 @@ export function RotationCard({ id, index, total, analysis }: { id: RotationId; i
                   <span className="num text-lg text-parchment"><CountUp value={m.v} decimals={m.d} locale={locale} /></span>
                   <span className="num text-[10px] text-slate">{m.unit}</span>
                 </dd>
+                {m.band && <dd className="num text-[10px] text-brass-glow">{m.band}</dd>}
               </div>
             ))}
           </dl>
@@ -223,17 +238,20 @@ export function RotationCard({ id, index, total, analysis }: { id: RotationId; i
           <div className="space-y-3 px-5 py-4">
             <div className="flex items-end gap-6">
               <div>
-                <div className="num text-3xl leading-none text-parchment"><CountUp value={r.peopleFedP.p50} decimals={0} locale={locale} /></div>
+                <div className="num text-3xl leading-none text-parchment"><CountUp value={headPeople} decimals={0} locale={locale} /></div>
                 <div className="mt-1 text-[10px] uppercase tracking-[0.14em] text-slate">{t('card.peopleFed')}</div>
               </div>
               <div>
-                <div className="num text-3xl leading-none text-parchment"><CountUp value={waterOf(r, !!rainfed)} decimals={0} locale={locale} /></div>
+                <div className="num text-3xl leading-none text-parchment"><CountUp value={headWater} decimals={0} locale={locale} /></div>
                 <div className="mt-1 text-[10px] uppercase tracking-[0.14em] text-slate">m³ {t(rainfed ? 'card.waterRain' : 'card.waterIrr')}</div>
               </div>
             </div>
             <p className="text-[14px] leading-relaxed text-parchment/90">
-              {t(rainfed ? 'card.farmerRain' : 'card.farmerIrr', { people: Math.round(r.peopleFedP.p50), water: Math.round(waterOf(r, !!rainfed)).toLocaleString(locale) })}
+              {t(rainfed ? 'card.farmerRain' : 'card.farmerIrr', { people: Math.round(headPeople), water: Math.round(headWater).toLocaleString(locale) })}
             </p>
+            {m && (rainfed
+              ? m.peopleFed.p10 < m.peopleFed.p50 - 0.5 && <p className="text-[13px] text-terracotta-light">{t('band.farmer', { people: Math.round(m.peopleFed.p10), water: Math.round(m.waterM3.p90).toLocaleString(locale) })}</p>
+              : m.waterM3.p90 > m.waterM3.p50 * 1.05 && <p className="text-[13px] text-terracotta-light">{t('band.farmerIrr', { water: Math.round(m.waterM3.p90).toLocaleString(locale) })}</p>)}
           </div>
         )}
 

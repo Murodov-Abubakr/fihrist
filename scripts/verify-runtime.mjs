@@ -15,8 +15,15 @@ await page.setViewport({ width: 1440, height: 900 });
 // (also exercises the app's reduced-motion path). Pass --motion to test with animations on.
 if (!process.argv.includes('--motion')) await page.emulateMediaFeatures([{ name: 'prefers-reduced-motion', value: 'reduce' }]);
 
+// `vite preview` has no Cloudflare Function: the Compute Grid's single probe to /api/simulate gets a
+// 404 per page load and falls back to local workers. That one 404 is expected; anything else fails.
+let simulate404 = 0;
+page.on('response', (r) => { if (new URL(r.url()).pathname === '/api/simulate' && r.status() === 404) simulate404++; });
+let tolerated404 = 0;
 page.on('console', (m) => {
-  if (m.type() === 'error' || /Content Security Policy|Refused to/i.test(m.text())) problems.push(`console.${m.type()}: ${m.text()}`);
+  const text = m.text();
+  if (m.type() === 'error' && /status of 404/.test(text) && simulate404 > tolerated404) { tolerated404++; return; }
+  if (m.type() === 'error' || /Content Security Policy|Refused to/i.test(text)) problems.push(`console.${m.type()}: ${text}`);
 });
 page.on('pageerror', (e) => problems.push(`pageerror: ${e.message}`));
 page.on('request', (r) => {
@@ -91,6 +98,20 @@ if (incomeFirst !== 'Fihrist regenerative') problems.push(`income-only priority:
 console.log(`re-ranking: water-only -> ${waterFirst}; income-only -> ${incomeFirst}`);
 
 await click('Scientist');
+// Compute Grid: 12 batches finish (edge or local fallback) and bands appear on the cards
+try {
+  await page.waitForFunction(() => /futures · 12 batches/.test(document.body.textContent ?? ''), { timeout: 20000 });
+  const grid = await page.evaluate(() => {
+    const tiles = [...document.querySelectorAll('ol li')].map((li) => li.textContent).filter((x) => x?.startsWith('#'));
+    const head = [...document.querySelectorAll('span')].map((s) => s.textContent).find((x) => /futures · 12 batches/.test(x ?? ''));
+    const bands = [...document.querySelectorAll('dd')].filter((d) => /^P10 .* · P90 /.test(d.textContent ?? '')).length;
+    return { head, tiles: tiles.slice(0, 3), n: tiles.length, bands };
+  });
+  console.log(`compute grid: ${grid.head} | first tiles: ${grid.tiles.join(' / ')} | band rows: ${grid.bands}`);
+  if (grid.bands < 3) problems.push(`expected P10/P90 band rows on the cards, got ${grid.bands}`);
+} catch {
+  problems.push('compute grid did not finish');
+}
 const metrics = await page.evaluate(() => document.querySelectorAll('dl dt').length);
 if (metrics !== 15) problems.push(`scientist mode: expected 15 metric labels, got ${metrics}`);
 await click('Farmer');
@@ -160,7 +181,9 @@ const lang = await page.evaluate(() => document.documentElement.lang);
 if (lang !== 'en') problems.push(`tampered language not rejected: ${lang}`);
 
 await browser.close();
+if (simulate404 > 2) problems.push(`too many /api/simulate 404s (${simulate404}); the probe should stop after one per page load`);
 console.log(`map click -> ${coords}`);
+console.log(`/api/simulate 404 probes (expected on vite preview): ${simulate404}`);
 if (problems.length) {
   console.log(`FAILED (${problems.length}):\n - ` + [...new Set(problems)].join('\n - '));
   process.exit(1);

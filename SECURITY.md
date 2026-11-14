@@ -11,7 +11,8 @@ Status key: **PASS** (already compliant) · **HARDENED** (defect found and fixed
 
 | ID | Area | Files | Status | Finding → action |
 |---|---|---|---|---|
-| A01 | Access control / CORS / CSRF | whole repo | N/A-now | Static site, no API, no credentials, no admin/debug routes. **Requirement:** `/api/simulate` will be same-origin only (no CORS headers emitted), POST JSON only, no cookies. |
+| A01 | Access control / CORS / CSRF | `functions/api/simulate.ts` | HARDENED | `/api/simulate` is POST-only, same-origin only (Origin must match, else 403), emits no CORS headers, uses no cookies or credentials. No admin/debug routes. |
+| A03/A04/A08 | Compute Grid input (edge + Web Workers) | `src/engine/montecarlo.ts`, `functions/api/simulate.ts`, `src/workers/mc.worker.ts` | HARDENED | One validator (`validateSimulateRequest`) for network and `postMessage` input: exact shape, finite numbers in range, own-property lookups only (prototype-pollution safe), ≤ 500 runs/batch, ≤ 16 batches, body ≤ 150 kB (413), JSON content type (415). Results from nodes re-validated client-side (`validateBatchResult`). No stack traces in responses; structured rejection log without IP/body (A09). Endpoint makes no outbound requests (A10). 9 handler tests + 9 payload tests. |
 | A02 | Secrets hygiene | `.gitignore`, all source | HARDENED | No secrets found (automated scan in `src/security.test.ts`). `.gitignore` lacked `.env*`, `.dev.vars` (Wrangler secrets), `*.pem`, `*.key`, `__pycache__/` → added. |
 | A02 | Transport | `FieldMap.tsx`, `index.html` | PASS | All external URLs are `https://` (test-enforced). HSTS header added. |
 | A03 | XSS / injection sinks | `src/**` | PASS | No `eval`, `new Function`, `dangerouslySetInnerHTML`, `innerHTML=`, `document.write` (test-enforced). Leaflet attribution is a static constant; no popups with user content. React escapes all i18n output. |
