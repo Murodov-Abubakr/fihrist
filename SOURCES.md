@@ -74,6 +74,7 @@ Not modelled yet (shown as information gaps): soil-water storage between months,
 ## Map and UI assets
 | Asset | Source / licence |
 |---|---|
+| Place search | Photon geocoder by Komoot (https://photon.komoot.io), OpenStreetMap data © OpenStreetMap contributors, ODbL; attribution shown in the search dropdown. Public instance — fair use. |
 | Satellite basemap | Esri World Imagery (Esri, Maxar, Earthstar Geographics, GIS User Community); attribution shown on map |
 | Fonts | Exo 2, Inter, IBM Plex Mono — self-hosted via @fontsource 5.3.0 (SIL Open Font License 1.1) |
 | Map library | Leaflet 1.9.4 (BSD-2) |

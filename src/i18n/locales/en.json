@@ -194,5 +194,14 @@
     "organic": "Organic matter",
     "forage": "Forage",
     "income": "Income"
+  },
+  "search": {
+    "label": "Search a place",
+    "placeholder": "Search your village, district or city…",
+    "none": "No places found. Try another spelling, or click the map.",
+    "loading": "Searching…",
+    "error": "Place search is unavailable right now — click the map or choose a preset.",
+    "coords": "Coordinates you typed",
+    "attribution": "Search: Photon · © OpenStreetMap contributors"
   }
 }

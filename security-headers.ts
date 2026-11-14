@@ -6,6 +6,7 @@
  * Allowed external origins — keep this list minimal:
  *  - https://power.larc.nasa.gov          NASA POWER API (connect-src)
  *  - https://server.arcgisonline.com      Esri World Imagery map tiles (img-src)
+ *  - https://photon.komoot.io             place search / geocoding, OpenStreetMap data (connect-src)
  */
 export const CSP = [
   "default-src 'self'",
@@ -13,7 +14,7 @@ export const CSP = [
   "style-src 'self'",
   "img-src 'self' data: https://server.arcgisonline.com",
   "font-src 'self'",
-  "connect-src 'self' https://power.larc.nasa.gov",
+  "connect-src 'self' https://power.larc.nasa.gov https://photon.komoot.io",
   "worker-src 'self'",
   "object-src 'none'",
   "base-uri 'self'",

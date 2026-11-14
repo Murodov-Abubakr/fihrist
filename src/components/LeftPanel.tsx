@@ -2,6 +2,7 @@ import { useTranslation } from 'react-i18next';
 import { PRESETS } from '../data/presets';
 import { PRIORITY_KEYS, useStore, type Irrigation, type PriorityKey, type Soil } from '../state';
 import { FieldMap } from './FieldMap';
+import { PlaceSearch } from './PlaceSearch';
 import { Icon, type IconName } from './icons';
 import { DataStatus } from './DataStatus';
 import type { ClimateState } from '../data/useClimate';
@@ -68,6 +69,7 @@ export function LeftPanel({ climate, onRetry }: { climate: ClimateState; onRetry
   return (
     <aside className="stone space-y-6 p-4 sm:p-5">
       <Section title={t('panel.location')}>
+        <PlaceSearch />
         <FieldMap />
         <DataStatus state={climate} onRetry={onRetry} />
         <div className="flex items-center justify-between gap-2 text-xs">

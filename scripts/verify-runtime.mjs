@@ -5,7 +5,7 @@
 import puppeteer from 'puppeteer-core';
 
 const base = process.argv[2] ?? 'http://localhost:4174';
-const ALLOWED_HOSTS = new Set([new URL(base).host, 'server.arcgisonline.com', 'power.larc.nasa.gov']);
+const ALLOWED_HOSTS = new Set([new URL(base).host, 'server.arcgisonline.com', 'power.larc.nasa.gov', 'photon.komoot.io']);
 const problems = [];
 
 const browser = await puppeteer.launch({ executablePath: 'C:/Program Files/Google/Chrome/Application/chrome.exe', args: ['--disable-gpu-vsync', '--disable-frame-rate-limit'] /* render even if the host display sleeps */ });
@@ -126,6 +126,31 @@ const t0 = Date.now();
 await waitStatus('Live from NASA', 15000, 'live NASA POWER fetch');
 const liveMs = Date.now() - t0;
 console.log(`live NASA POWER fetch + parse: ${liveMs} ms -> ${await statusText()}`);
+
+// Place search: type a village, pick from the dropdown with Enter → map + coordinates move there
+await page.click('input[role="combobox"]');
+await page.keyboard.type('Hisor', { delay: 40 });
+try {
+  await page.waitForSelector('[role="option"]', { timeout: 10000 });
+  const first = await page.evaluate(() => document.querySelector('[role="option"]')?.textContent);
+  await page.keyboard.press('Enter');
+  await new Promise((r) => setTimeout(r, 800));
+  const c2 = await page.evaluate(() => [...document.querySelectorAll('.num')].map((e) => e.textContent).find((t) => /°\s*[,/]\s*-?\d/.test(t ?? '')));
+  const mm = c2?.match(/(-?\d+\.\d+)°\s*[,/]\s*(-?\d+\.\d+)°/);
+  if (!mm || Math.abs(+mm[1] - 38.53) > 0.1 || Math.abs(+mm[2] - 68.56) > 0.1) problems.push(`place search: expected Hisor (38.53, 68.56), got ${c2} (first option: ${first})`);
+  console.log(`place search "Hisor" -> ${first} -> ${c2}`);
+} catch {
+  problems.push('place search: no suggestions appeared');
+}
+// typed coordinates work without the network
+await page.focus('input[role="combobox"]');
+await page.keyboard.down('Control'); await page.keyboard.press('KeyA'); await page.keyboard.up('Control');
+await page.keyboard.type('38.8 N, 99.3 W', { delay: 20 });
+await page.waitForSelector('[role="option"]', { timeout: 3000 }).catch(() => problems.push('coordinate search: no option'));
+await page.keyboard.press('Enter');
+await new Promise((r) => setTimeout(r, 500));
+const c3 = await page.evaluate(() => [...document.querySelectorAll('.num')].map((e) => e.textContent).find((t) => /°\s*[,/]\s*-?\d/.test(t ?? '')));
+if (!c3?.includes('38.800') || !c3.includes('-99.300')) problems.push(`coordinate search: got ${c3}`);
 
 // Tampered storage: XSS payload as language must fall back to en
 await page.evaluate(() => localStorage.setItem('fihrist.lang', '"><img src=x onerror=alert(1)>'));

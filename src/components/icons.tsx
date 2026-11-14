@@ -68,6 +68,9 @@ export const Icons = {
   info: ({ size, ...p }: P) => (
     <svg {...base(size)} {...p}><circle cx="12" cy="12" r="8.5" /><path d="M12 11v5M12 8h.01" /></svg>
   ),
+  search: ({ size, ...p }: P) => (
+    <svg {...base(size)} {...p}><circle cx="11" cy="11" r="6.5" /><path d="m20 20-4.4-4.4" /></svg>
+  ),
   close: ({ size, ...p }: P) => (
     <svg {...base(size)} {...p}><path d="M6 6l12 12M18 6 6 18" /></svg>
   ),
