@@ -1,0 +1,87 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  html { color-scheme: dark; }
+  body {
+    @apply bg-ink text-parchment font-sans antialiased;
+    min-height: 100vh;
+  }
+  h1, h2, h3 { @apply font-display; }
+  :focus-visible { outline: 2px solid #C9A55A; outline-offset: 2px; }
+}
+
+@layer components {
+  /* Ledger page: indigo panel, thin brass rule, corner ornaments drawn with gradients */
+  .ledger {
+    @apply relative bg-panel/90 border border-brass/25 rounded-md;
+    box-shadow: 0 1px 0 rgba(201, 165, 90, 0.08) inset, 0 12px 32px -18px rgba(0, 0, 0, 0.8);
+  }
+  .ledger::before,
+  .ledger::after {
+    content: '';
+    position: absolute;
+    width: 14px;
+    height: 14px;
+    pointer-events: none;
+    border-color: #C9A55A;
+    opacity: 0.75;
+  }
+  .ledger::before { top: 5px; left: 5px; border-top: 1px solid; border-left: 1px solid; }
+  .ledger::after { bottom: 5px; right: 5px; border-bottom: 1px solid; border-right: 1px solid; }
+
+  .brass-rule {
+    height: 1px;
+    background: linear-gradient(90deg, transparent, rgba(201, 165, 90, 0.55) 15%, rgba(201, 165, 90, 0.55) 85%, transparent);
+  }
+  .eyebrow { @apply text-[11px] uppercase tracking-[0.16em] text-brass font-medium; }
+  .num { @apply font-mono tabular-nums; }
+
+  .chip {
+    @apply px-2.5 py-1.5 rounded border border-brass/25 text-sm text-parchment/90 transition-colors;
+  }
+  .chip:hover { @apply border-brass/60 bg-panel-2; }
+  .chip[aria-pressed='true'] { @apply border-brass bg-brass/15 text-parchment; }
+
+  /* Range input in brass */
+  .range {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 100%;
+    height: 4px;
+    border-radius: 2px;
+    background: linear-gradient(90deg, #C9A55A var(--fill, 50%), #2A3158 var(--fill, 50%));
+  }
+  .range::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    width: 16px; height: 16px; border-radius: 50%;
+    background: #0B1020; border: 2px solid #C9A55A; cursor: pointer;
+  }
+  .range::-moz-range-thumb {
+    width: 14px; height: 14px; border-radius: 50%;
+    background: #0B1020; border: 2px solid #C9A55A; cursor: pointer;
+  }
+}
+
+/* Leaflet dark adaptation */
+.leaflet-container { background: #0B1020; font-family: Inter, system-ui, sans-serif; }
+.leaflet-tile-pane { filter: brightness(0.78) saturate(0.85) contrast(1.05); }
+
+/* Fraunces has no Cyrillic: Russian and Tajik headings use Cormorant Garamond (cyrillic + cyrillic-ext). */
+:lang(ru) .font-display, :lang(tg) .font-display,
+:lang(ru) h1, :lang(ru) h2, :lang(ru) h3,
+:lang(tg) h1, :lang(tg) h2, :lang(tg) h3 {
+  font-family: 'Cormorant Garamond', Georgia, serif;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+}
+/* Small caps labels stay in Inter for Cyrillic — Cormorant is too thin at 11px. */
+:lang(ru) .eyebrow, :lang(tg) .eyebrow { font-family: Inter, system-ui, sans-serif; font-weight: 600; letter-spacing: 0.12em; }
+.leaflet-control-attribution { background: rgba(11, 16, 32, 0.75) !important; color: #A3AAC2 !important; font-size: 10px; }
+.leaflet-control-attribution a { color: #C9A55A !important; }
+.leaflet-bar a { background: #141A33 !important; color: #EADFC8 !important; border-color: rgba(201,165,90,.3) !important; }
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation-duration: 0.001ms !important; transition-duration: 0.001ms !important; }
+}
