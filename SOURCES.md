@@ -43,6 +43,34 @@ Verified against the FAO-56 web edition, Tables 11 and 12 (https://www.fao.org/4
 | Sorghum (grain) | 0.3 / 1.05 / 0.55 | 20/35/45/30 | 1.5 m | 10 °C | T12 (Cereals group Kc ini; mid = midpoint of 1.00–1.10); T11 Arid Region row. **TODO verify** Tbase source |
 | Mung bean (= green gram) | 0.4 / 1.05 / 0.35 | 20/30/30/20 | 0.4 m | 10 °C | T12 "Green Gram and Cowpeas" (dry harvest); T11 row prints total 110 d but stages sum to 100 d. **TODO verify** Tbase source |
 
+## Rotation model parameters (`src/engine/params.ts`, researched 2026-11-14)
+Quality: **sourced** = from the cited source for this crop/region · **proxy** = sourced but for a related crop/region · **TODO** = assumption awaiting a source. Every non-sourced item is listed automatically in each card's "Information gaps".
+
+| Parameter | Value | Quality | Source |
+|---|---|---|---|
+| Ky winter wheat | 1.00 | sourced | Doorenbos & Kassam 1979 (FAO-33), as reproduced in FAO/IAEA Moutonnet, FAO Water Report 22, Table 1 (https://www.fao.org/4/Y3655E/y3655e04.htm) |
+| Ky cotton | 0.85 | sourced | same table |
+| Ky sorghum | 0.90 | TODO | FAO-33 table seen only in a search excerpt |
+| Ky chickpea, mung bean | 1.15 | proxy | FAO-33 "beans" (no chickpea/mung row) |
+| Ym wheat, Central Asia | 4.0 t/ha | sourced | ICARDA yield-gap analysis for Central Asia (~4.0 t/ha irrigated; ~1.0 t/ha rainfed); consistent with Khatlon 2022 official 3.6 t/ha |
+| Ym wheat, Kansas | 3.30 t/ha (49 bu/ac) | sourced | Crops & Soils (CSSA) 2024: irrigated Kansas winter wheat 1970–2022 average — independent of NASS dryland yields kept for validation |
+| Ym chickpea, mung (CA) | 1.35 t/ha | proxy | FAOSTAT via Helgi Library: Tajikistan dry peas 13,486 hg/ha (2022) |
+| Ym sorghum (CA) | 3.63 t/ha | proxy | Tajikistan cereal yield 3,629 kg/ha (2023), Statbase/World Bank |
+| Ym cotton (CA) | 1.7 t/ha seed cotton | TODO | secondary report, year/basis unclear |
+| kcal / protein per 100 g | wheat 327/12.6 · chickpea 378/20.5 · mung 347/23.9 · sorghum 329/10.6 | sourced | USDA FoodData Central SR Legacy 168890, 173756, 174256, 169716 |
+| Cotton food energy | 0 | TODO | lint is not food; cottonseed oil not yet counted (CLAUDE.md §6) |
+| N : protein factor | 6.25 | sourced | FAO 2003, Food and Nutrition Paper 77 |
+| N fixed chickpea / mung | 70 / 34 kg N/ha | proxy | GRDC Update Paper 2015 "Fixing more nitrogen in pulse crops" (Australian averages), scaled by relative yield — the single fixation source (CLAUDE.md §5 eq. 8) |
+| Urea price | 338.3 USD/t | proxy | World Bank Pink Sheet (Dec 2025), 2024 annual average, Urea E. Europe |
+| Wheat price | 268.7 USD/t | proxy | same, Wheat US HRW |
+| Sorghum price | 190.6 USD/t | proxy | same, Maize (sorghum series discontinued) |
+| Cotton price | 1.91 USD/kg lint × 35 % turnout | TODO | same, Cotton A Index; lint turnout unsourced |
+| Chickpea / mung price | 500 / 875 USD/t | TODO | Tridge export-price aggregates (noisy) — local prices needed |
+| Irrigation efficiency canal / drip | 0.50 / 0.90 | sourced / TODO | FAO Water Report: traditional schemes "typically less than 50 percent"; drip value commonly cited |
+| People fed | kcal / (2,200 × 365) | — | CLAUDE.md §5 eq. 9 |
+
+Not modelled yet (shown as information gaps): soil-water storage between months, nitrogen losses, wheat winter dormancy, farm costs other than replacing nitrogen.
+
 ## Map and UI assets
 | Asset | Source / licence |
 |---|---|

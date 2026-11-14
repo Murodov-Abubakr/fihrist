@@ -10,6 +10,7 @@ import { RotationCard, type RotationId } from './components/RotationCard';
 import { Timeline, ChartsShell } from './components/Timeline';
 import { Drawer } from './components/Drawer';
 import { useClimate } from './data/useClimate';
+import { ROTATION_IDS, useRotations } from './data/useRotations';
 
 export default function App() {
   const { t } = useTranslation();
@@ -20,8 +21,10 @@ export default function App() {
   const closeMethod = useCallback(() => setMethodOpen(false), []);
   const { state: climate, retry } = useClimate(state.lat, state.lon, state.presetId);
 
-  // Ranking is a placeholder order until the engine produces scores (step 3).
-  const cards: RotationId[] = ['baseline', 'waterSaving', 'regenerative'];
+  const series = climate.status === 'ready' ? climate.result.series : null;
+  const analysis = useRotations(series, state.irrigation, state.rotation, state.priorities);
+  // Cards are ordered by the farmer's priorities; canonical order until results exist.
+  const cards: RotationId[] = analysis?.order ?? ROTATION_IDS;
 
   return (
     <StoreContext.Provider value={store}>
@@ -41,7 +44,7 @@ export default function App() {
           </div>
           <div className="relative grid gap-x-6 gap-y-8 pt-10 md:grid-cols-2 xl:grid-cols-3">
             {cards.map((id, i) => (
-              <RotationCard key={id} id={id} rank={i + 1} total={cards.length} index={i} />
+              <RotationCard key={id} id={id} total={cards.length} index={i} analysis={analysis} />
             ))}
           </div>
           <div className="relative"><Timeline /></div>

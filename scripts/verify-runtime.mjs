@@ -61,6 +61,35 @@ for (const p of ['Khatlon / Panj', 'Balkh / Kunduz', 'Kansas (validation)', 'Gis
   await click(p);
   await waitStatus('Preset file', 8000, `preset ${p}`);
 }
+// Rotation results render and priorities re-rank the cards (Gissar, canal irrigation)
+const cardOrder = () => page.evaluate(() => [...document.querySelectorAll('article h2')].map((h) => h.textContent?.trim()));
+const setPriorities = (vals) => page.evaluate((v) => {
+  const labels = [...document.querySelectorAll('aside label')];
+  const setter = Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value').set;
+  for (const [name, val] of Object.entries(v)) {
+    const input = labels.find((l) => l.textContent?.includes(name))?.querySelector('input[type=range]');
+    if (!input) return `slider not found: ${name}`;
+    setter.call(input, String(val));
+    input.dispatchEvent(new Event('input', { bubbles: true }));
+  }
+  return 'ok';
+}, vals);
+try {
+  await page.waitForFunction(() => /People fed/i.test(document.querySelector('article')?.textContent ?? ''), { timeout: 8000 });
+} catch { problems.push('rotation results did not render'); }
+const all0 = { 'Save water': 0, 'Soil nitrogen': 0, 'Less erosion': 0, 'Organic matter': 0, 'Animal forage': 0, Income: 0 };
+let r1 = await setPriorities({ ...all0, 'Save water': 100 });
+await new Promise((r) => setTimeout(r, 900));
+const waterFirst = (await cardOrder())[0];
+r1 = r1 === 'ok' ? await setPriorities({ ...all0, Income: 100 }) : r1;
+await new Promise((r) => setTimeout(r, 900));
+const incomeFirst = (await cardOrder())[0];
+if (r1 !== 'ok') problems.push(r1);
+// Gissar + canal: continuous wheat uses least water; regenerative has highest true profit (engine table)
+if (waterFirst !== 'Baseline') problems.push(`water-only priority: expected Baseline first, got ${waterFirst}`);
+if (incomeFirst !== 'Fihrist regenerative') problems.push(`income-only priority: expected Fihrist regenerative first, got ${incomeFirst}`);
+console.log(`re-ranking: water-only -> ${waterFirst}; income-only -> ${incomeFirst}`);
+
 await click('Scientist');
 const metrics = await page.evaluate(() => document.querySelectorAll('dl dt').length);
 if (metrics !== 15) problems.push(`scientist mode: expected 15 metric labels, got ${metrics}`);

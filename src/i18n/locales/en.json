@@ -76,7 +76,21 @@
     "risks": "Local risks",
     "placeholder": "Filled in once the engine runs on real NASA POWER data.",
     "farmerPlaceholder": "Your answer appears here once we read the NASA data for your field.",
-    "year": "Year {{n}}"
+    "year": "Year {{n}}",
+    "waterIrr": "Canal water",
+    "waterRain": "Water shortfall",
+    "nBalance": "Soil N balance",
+    "perYr": "/yr",
+    "vsCurrent": "vs your current rotation",
+    "reference": "Your current rotation (reference)",
+    "year1": "Year 1 profit",
+    "avg10": "10-year average",
+    "replayed": "Replayed on real weather, 2015–2024",
+    "farmerIrr": "Feeds about {{people}} people per hectare and needs {{water}} m³ of canal water a year.",
+    "farmerRain": "Feeds about {{people}} people per hectare; in a typical year the crops are short of {{water}} m³ of water.",
+    "notFood": "Cotton lint is not food — calories come only from the food crops.",
+    "scoreTitle": "Why this rank (your priorities)",
+    "loadingSim": "Calculating with NASA data…"
   },
   "timeline": {
     "title": "The field year",
@@ -130,5 +144,55 @@
     "days": "days",
     "grid": "grid elevation",
     "retry": "Try again"
+  },
+  "why": {
+    "baseline": "This is what you grow now. The other two rotations are compared against it.",
+    "waterSaving": "Brings in chickpea, a legume that feeds the soil with nitrogen, and sorghum, a cereal that tolerates heat and dry spells.",
+    "regenerative": "Adds a summer mung bean after the wheat harvest and a winter cover crop, so living roots protect and feed the soil most of the year.",
+    "lessWater": "Uses {{pct}}% less water than your current rotation.",
+    "moreWater": "Uses {{pct}}% more water than your current rotation — summer crops grow in the hottest, driest months.",
+    "moreFood": "Feeds {{pct}}% more people per hectare.",
+    "lessFood": "Feeds {{pct}}% fewer people per hectare."
+  },
+  "evidence": {
+    "climate": "NASA POWER daily data for this point ({{from}}–{{to}}): yearly reference evapotranspiration {{et0}} mm, rain {{rain}} mm, July maximum {{tmax}} °C, {{frost}} frost days a year.",
+    "season": "On 2015–2024 weather this rotation needed {{etc}} mm of crop water a year; effective rain supplied {{peff}} mm.",
+    "sources": "Datasets: NASA POWER (MERRA-2 meteorology, CERES radiation). Method: FAO-56 Penman–Monteith, FAO-33 yield response."
+  },
+  "benefit": {
+    "water": "Water",
+    "food": "People fed",
+    "nitrogen": "Soil N",
+    "profit": "True profit",
+    "erosion": "Rain on bare soil",
+    "profitNote": "True profit = crop value minus the cost of replacing the nitrogen the crops removed. Other farm costs are not included."
+  },
+  "gap": {
+    "grid": "NASA POWER cells are about 50 km wide (cell elevation {{elev}} m); a 1 ha field can be warmer, cooler or wetter.",
+    "rainDoubt": "Satellite-model rain can be too low in mountain valleys — check against a local rain gauge.",
+    "soil": "Water stored in the soil between months is not modelled yet, so rainfed yields are likely underestimated.",
+    "nLoss": "Nitrogen losses (leaching, gas) are not modelled, so the real nitrogen debt is likely larger.",
+    "prices": "Prices are international reference prices, not your local market.",
+    "dormancy": "Winter dormancy of wheat is not modelled yet (open question).",
+    "region": "Reference yields are for Central Asia and may not fit this location.",
+    "params": "{{n}} numbers here are proxies or not yet verified:"
+  },
+  "risk": {
+    "seed": "Is good seed of {{crops}} available and affordable locally?",
+    "machinery": "Small-seeded legumes may need different planting and harvesting equipment.",
+    "water": "Summer crops need irrigation turns in July–August — agree the schedule with your water-user association.",
+    "market": "Is there a buyer for {{crops}} at a fair price?",
+    "pests": "New crops bring new pests and diseases — plan field scouting with an agronomist.",
+    "drought": "In a dry year (P10) this rotation feeds {{p10}} people/ha instead of {{p50}}.",
+    "nDebt": "Soil nitrogen keeps falling: {{n}} kg N/ha over 10 years unless replaced with fertilizer or legumes.",
+    "labour": "Two crops a year means more work at harvest and sowing time."
+  },
+  "rank": {
+    "water": "Water",
+    "nitrogen": "Nitrogen",
+    "erosion": "Erosion",
+    "organic": "Organic matter",
+    "forage": "Forage",
+    "income": "Income"
   }
 }
