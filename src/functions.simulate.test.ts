@@ -5,7 +5,7 @@
 import { describe, expect, it, vi } from 'vitest';
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
-import { onRequestPost } from '../functions/api/simulate';
+import { onRequest, onRequestPost } from '../functions/api/simulate';
 import { buildSeasonTables, deriveForMc, validateBatchResult } from './engine/montecarlo';
 
 const s = JSON.parse(readFileSync(join(__dirname, '../public/data/presets/gissar.json'), 'utf8')).series;
@@ -48,5 +48,14 @@ describe('POST /api/simulate', () => {
     expect(body.ok).toBe(false);
     expect(JSON.stringify(body)).not.toMatch(/at .*\.ts|stack/i); // no stack traces leak
     expect(({} as Record<string, unknown>).polluted).toBeUndefined();
+  });
+});
+
+describe('other methods on /api/simulate', () => {
+  it('answers 405 with Allow: POST instead of falling through to the SPA', async () => {
+    const res = await onRequest();
+    expect(res.status).toBe(405);
+    expect(res.headers.get('Allow')).toBe('POST');
+    expect(res.headers.get('Content-Type')).toMatch(/application\/json/);
   });
 });

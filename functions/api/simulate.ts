@@ -52,3 +52,10 @@ export const onRequestPost = async ({ request }: Ctx): Promise<Response> => {
     return reject(400, e instanceof McPayloadError ? e.message : 'invalid request');
   }
 };
+
+// Every other method: explicit 405 (otherwise Pages falls through to the SPA's index.html with 200).
+export const onRequest = async (): Promise<Response> => {
+  const res = json(405, { ok: false, error: 'method not allowed' });
+  res.headers.set('Allow', 'POST');
+  return res;
+};
