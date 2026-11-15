@@ -12,6 +12,7 @@ import { Charts } from './components/Charts';
 import { Methodology } from './components/Methodology';
 import { Validation } from './components/Validation';
 import { FieldTotals } from './components/FieldTotals';
+import { Astrolabe } from './components/Astrolabe';
 
 // The globe (MapLibre GL, ~250 kB gzipped) loads in its own chunk, in parallel with the rest of the app.
 const GlobeIntro = lazy(() => import('./components/GlobeIntro').then((m) => ({ default: m.GlobeIntro })));
@@ -90,7 +91,13 @@ export default function App() {
         <Validation soil={state.soil} />
       </Drawer>
       {globeOpen && (
-        <Suspense fallback={<div className="fixed inset-0 z-[2000] bg-black" />}>
+        <Suspense fallback={
+          // slow connections: never a blank black screen — show progress and a way out
+          <div className="fixed inset-0 z-[2000] flex flex-col items-center justify-center gap-6 bg-black">
+            <Astrolabe size={56} label={t('globe.loading')} />
+            <button className="chip !px-4 !py-1 text-xs" onClick={closeGlobe}>{t('globe.skip')}</button>
+          </div>
+        }>
           <GlobeIntro onDone={closeGlobe} />
         </Suspense>
       )}

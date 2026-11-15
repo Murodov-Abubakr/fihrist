@@ -19,6 +19,15 @@ const tag = phone ? 'phone' : 'desktop';
 await page.goto(base, { waitUntil: 'networkidle0', timeout: 60000 });
 await new Promise((r) => setTimeout(r, 3000));
 await page.screenshot({ path: `${out}/globe-1-${tag}.png` });
+// panel hides itself while the globe moves (user drag)
+const mapBox = await page.evaluate(() => { const r = document.querySelector('.maplibregl-canvas').getBoundingClientRect(); return { x: r.x + r.width / 2, y: r.y + r.height * 0.3 }; });
+await page.mouse.move(mapBox.x, mapBox.y); await page.mouse.down();
+for (let i = 1; i <= 8; i++) { await page.mouse.move(mapBox.x - i * 15, mapBox.y); await new Promise((r) => setTimeout(r, 30)); }
+const hiddenWhileMoving = await page.evaluate(() => getComputedStyle(document.querySelector('[role="dialog"] .slab').parentElement).opacity);
+await page.mouse.up();
+await new Promise((r) => setTimeout(r, 2200));
+const shownAfter = await page.evaluate(() => getComputedStyle(document.querySelector('[role="dialog"] .slab').parentElement).opacity);
+console.log(`panel opacity while dragging: ${hiddenWhileMoving}, after: ${shownAfter}`);
 
 const click = (txt) => page.evaluate((t) => { const b = [...document.querySelectorAll('[role="dialog"] button')].find((x) => x.textContent?.trim() === t); b?.click(); return !!b; }, txt);
 console.log('preset', await click('Gissar valley'));
@@ -29,13 +38,46 @@ const cx = box.x + box.w * (phone ? 0.5 : 0.62);
 const cy = box.y + box.h * (phone ? 0.25 : 0.42);
 for (const [dx, dy] of [[-40, -30], [45, -35], [50, 35], [-35, 40]]) { await page.mouse.click(cx + dx, cy + dy); await new Promise((r) => setTimeout(r, 300)); }
 await new Promise((r) => setTimeout(r, 800));
-const area = await page.evaluate(() => [...document.querySelectorAll('[role="dialog"] [role="status"]')].map((e) => e.textContent).join(' '));
+const areaOf = () => page.evaluate(() => [...document.querySelectorAll('[role="dialog"] [role="status"]')].map((e) => e.textContent).join(' '));
+const area = await areaOf();
 console.log('area text:', area);
+// drag the first corner 60 px outward: the area must grow
+await page.mouse.move(cx - 40, cy - 30); await page.mouse.down();
+for (let i = 1; i <= 6; i++) { await page.mouse.move(cx - 40 - i * 10, cy - 30 - i * 6); await new Promise((r) => setTimeout(r, 40)); }
+await page.mouse.up();
+await new Promise((r) => setTimeout(r, 500));
+const area2 = await areaOf();
+console.log(`globe corner drag: ${area} -> ${area2}`);
 await page.screenshot({ path: `${out}/globe-2-${tag}.png` });
 console.log('analyse', await click('Analyse this field'));
 await new Promise((r) => setTimeout(r, 6000)); // live NASA POWER fetch for the centroid
 await page.screenshot({ path: `${out}/globe-3-${tag}.png` });
 const totals = await page.evaluate(() => [...document.querySelectorAll('section')].find((s) => /Your field: [\d.]+ ha/.test(s.textContent ?? ''))?.textContent?.slice(0, 260));
 console.log('field totals:', totals);
-console.log('errors:', errors.length ? errors : 'none');
+// 2D map: "Edit field" reopens the outline; drag a corner handle; area updates; save it
+await page.evaluate(() => [...document.querySelectorAll('aside button')].find((b) => b.textContent?.trim() === 'Edit field')?.click());
+await new Promise((r) => setTimeout(r, 600));
+await page.evaluate(() => document.querySelector('.field-vertex')?.scrollIntoView({ block: 'center' }));
+await new Promise((r) => setTimeout(r, 400));
+const v = await page.evaluate(() => { const e = document.querySelector('.field-vertex'); if (!e) return null; const r = e.getBoundingClientRect(); return { x: r.x + r.width / 2, y: r.y + r.height / 2, cls: e.className, vh: innerHeight }; });
+console.log('corner handle:', JSON.stringify(v));
+if (v) {
+  const before = await page.evaluate(() => document.querySelector('aside [role="status"]')?.textContent);
+  if (phone) { // real touch events on the phone viewport
+    await page.touchscreen.touchStart(v.x, v.y);
+    for (let i = 1; i <= 6; i++) { await page.touchscreen.touchMove(v.x - i * 6, v.y - i * 4); await new Promise((r) => setTimeout(r, 40)); }
+    await page.touchscreen.touchEnd();
+  } else {
+    await page.mouse.move(v.x, v.y); await page.mouse.down();
+    for (let i = 1; i <= 6; i++) { await page.mouse.move(v.x - i * 6, v.y - i * 4); await new Promise((r) => setTimeout(r, 40)); }
+    await page.mouse.up();
+  }
+  await new Promise((r) => setTimeout(r, 400));
+  const after = await page.evaluate(() => document.querySelector('aside [role="status"]')?.textContent);
+  console.log(`2D corner drag: ${before} -> ${after}`);
+  await page.evaluate(() => [...document.querySelectorAll('aside button')].find((b) => b.textContent?.trim() === 'Use this field')?.click());
+  await new Promise((r) => setTimeout(r, 800));
+  await page.screenshot({ path: `${out}/globe-4-${tag}.png` });
+} else console.log('2D corner drag: no corner handles found');
+console.log('errors:', errors.length ? errors.map((e) => e.slice(0, 160)).join(' | ') : 'none');
 await browser.close();

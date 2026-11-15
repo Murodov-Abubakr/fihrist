@@ -9,7 +9,6 @@ import { PRESETS } from '../data/presets';
 import { FIELD_MAX_VERTICES, makeField, type LonLat } from '../lib/field';
 import { clampLat, wrapLon } from '../lib/geo';
 import { PlaceSearch } from './PlaceSearch';
-import { Icons } from './icons';
 
 setWorkerUrl(workerUrl);
 
@@ -36,8 +35,8 @@ const STYLE: StyleSpecification = {
 
 type FieldData = Parameters<GeoJSONSource['setData']>[0];
 function fieldGeoJSON(ring: LonLat[]): FieldData {
-  const feat = (geometry: object) => ({ type: 'Feature', properties: {}, geometry });
-  const features = ring.map((p) => feat({ type: 'Point', coordinates: p }));
+  const feat = (geometry: object, i = -1) => ({ type: 'Feature', properties: { i }, geometry });
+  const features = ring.map((p, i) => feat({ type: 'Point', coordinates: p }, i));
   if (ring.length >= 3) features.push(feat({ type: 'Polygon', coordinates: [[...ring, ring[0]]] }));
   else if (ring.length === 2) features.push(feat({ type: 'LineString', coordinates: ring }));
   return { type: 'FeatureCollection', features } as unknown as FieldData;
@@ -57,9 +56,12 @@ export function GlobeIntro({ onDone }: { onDone: () => void }) {
   const [failed, setFailed] = useState(false);
   const [zoom, setZoom] = useState(1.6);
   const [drawing, setDrawing] = useState(false);
-  const [ring, setRing] = useState<LonLat[]>([]);
+  const [ring, setRing] = useState<LonLat[]>(() => state.field?.ring ?? []); // reopened globe: edit the current field
   const drawingRef = useRef(false);
   drawingRef.current = drawing;
+  // panel: user can hide it; it also fades out while the globe is moved or zoomed (not during the idle spin)
+  const [panelHidden, setPanelHidden] = useState(false);
+  const [moving, setMoving] = useState(false);
   const reduce = typeof window !== 'undefined' && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
   // create the globe once
@@ -81,12 +83,52 @@ export function GlobeIntro({ onDone }: { onDone: () => void }) {
     map.on('error', () => { /* tile errors are non-fatal; nothing user-supplied is logged */ });
     map.on('click', (e) => {
       if (!drawingRef.current) return;
+      if (justDragged) { justDragged = false; return; } // the click that ends a corner drag adds nothing
       const p: LonLat = [wrapLon(e.lngLat.lng), clampLat(e.lngLat.lat)];
       setRing((r) => (r.length >= FIELD_MAX_VERTICES ? r : [...r, p]));
     });
+    // drag-and-drop corners (mouse and touch): grab a corner, move it, release
+    let dragIdx = -1;
+    let justDragged = false;
+    const grab = (e: { point: { x: number; y: number }; preventDefault: () => void }) => {
+      if (!drawingRef.current) return;
+      const hit = map.queryRenderedFeatures([[e.point.x - 10, e.point.y - 10], [e.point.x + 10, e.point.y + 10]], { layers: ['field-pts'] })[0];
+      const i = Number(hit?.properties?.i);
+      if (!Number.isInteger(i) || i < 0) return;
+      e.preventDefault(); // stop the map from panning
+      dragIdx = i;
+      map.dragPan.disable();
+      box.current?.classList.add('cursor-grabbing');
+    };
+    const move = (e: { lngLat: { lng: number; lat: number } }) => {
+      if (dragIdx < 0) return;
+      const p: LonLat = [wrapLon(e.lngLat.lng), clampLat(e.lngLat.lat)];
+      setRing((r) => r.map((q, j) => (j === dragIdx ? p : q)));
+    };
+    const drop = () => {
+      if (dragIdx < 0) return;
+      dragIdx = -1;
+      justDragged = true;
+      window.setTimeout(() => { justDragged = false; }, 300);
+      map.dragPan.enable();
+      box.current?.classList.remove('cursor-grabbing');
+    };
+    map.on('mousedown', grab); map.on('touchstart', (e) => { if (e.points.length === 1) grab(e); });
+    map.on('mousemove', move); map.on('touchmove', move);
+    map.on('mouseup', drop); map.on('touchend', drop); map.on('touchcancel', drop);
+    // pointer hint over corners
+    map.on('mouseenter', 'field-pts', () => { if (drawingRef.current) map.getCanvas().style.cursor = 'grab'; });
+    map.on('mouseleave', 'field-pts', () => { map.getCanvas().style.cursor = ''; });
     // slow spin until the user touches the globe
     let spinning = !reduce;
     const stop = () => { spinning = false; };
+    let settle = 0;
+    // panel fades while the user moves/zooms the globe; comes back shortly after the last movement
+    // (desktop drags can end with an inertia ease, so 'moveend' is the signal, plus a safety timer)
+    const settleSoon = (ms: number) => { clearTimeout(settle); settle = window.setTimeout(() => setMoving(false), ms); };
+    map.on('movestart', () => { if (!spinning && dragIdx < 0) { clearTimeout(settle); setMoving(true); } });
+    map.on('move', () => { if (!spinning) settleSoon(1500); });
+    map.on('moveend', () => settleSoon(350));
     map.on('mousedown', stop); map.on('touchstart', stop); map.on('wheel', stop); map.on('dragstart', stop);
     let raf = 0;
     const spin = () => {
@@ -95,7 +137,7 @@ export function GlobeIntro({ onDone }: { onDone: () => void }) {
     };
     map.once('load', () => { if (spinning) raf = requestAnimationFrame(spin); });
     (map as unknown as { __stopSpin: () => void }).__stopSpin = stop;
-    return () => { cancelAnimationFrame(raf); map.remove(); mapRef.current = null; };
+    return () => { cancelAnimationFrame(raf); clearTimeout(settle); map.remove(); mapRef.current = null; };
   }, [reduce]);
 
   // fly to the place chosen in the search box or a preset
@@ -147,19 +189,41 @@ export function GlobeIntro({ onDone }: { onDone: () => void }) {
   }
 
   return (
-    <div className="fixed inset-0 z-[2000] bg-black" role="dialog" aria-modal="true" aria-label={t('globe.title')}>
+    <div className="globe-intro fixed inset-0 z-[2000] bg-black" role="dialog" aria-modal="true" aria-label={t('globe.title')}>
       {/* MapLibre sets position: relative on its container, so the container fills a positioned wrapper */}
       <div className="absolute inset-0"><div ref={box} className="h-full w-full" /></div>
 
-      <div className="pointer-events-none absolute inset-x-0 top-0 p-4 sm:p-6" style={{ paddingTop: 'max(1rem, env(safe-area-inset-top, 0px))' }}>
-        <div className="font-display text-xl font-semibold uppercase tracking-[0.34em] text-parchment drop-shadow">{t('app.name')}</div>
-        <div className="mt-1 max-w-md text-[11px] uppercase tracking-[0.2em] text-slate drop-shadow">{t('globe.title')}</div>
+      <div className="pointer-events-none absolute inset-x-0 top-0 flex items-start justify-between gap-3 p-4 sm:p-6" style={{ paddingTop: 'max(1rem, env(safe-area-inset-top, 0px))' }}>
+        <div className="min-w-0">
+          <div className="font-display text-xl font-semibold uppercase tracking-[0.34em] text-parchment drop-shadow">{t('app.name')}</div>
+          <div className="mt-1 max-w-md text-[11px] uppercase tracking-[0.2em] text-slate drop-shadow">{t('globe.title')}</div>
+        </div>
+        {/* always visible, top-right: the way out of the intro */}
+        <button data-action="skip-globe" onClick={onDone}
+          className="pointer-events-auto shrink-0 rounded-full border border-white bg-pill px-4 py-2 text-sm font-medium text-[#17191C] shadow-select transition-transform hover:scale-[1.03] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white">
+          {t('globe.skipToApp')} <span aria-hidden>→</span>
+        </button>
       </div>
 
-      <div className="absolute inset-x-3 bottom-3 sm:inset-x-auto sm:bottom-6 sm:left-6 sm:w-[400px]" style={{ paddingBottom: 'env(safe-area-inset-bottom, 0px)' }}>
+      {panelHidden && (
+        <button onClick={() => setPanelHidden(false)}
+          className={`chip absolute bottom-4 left-1/2 -translate-x-1/2 !bg-[#1E2126] !px-4 !py-1.5 text-xs transition-opacity duration-300 sm:bottom-6 ${moving ? 'pointer-events-none opacity-0' : 'opacity-100'}`}
+          style={{ marginBottom: 'env(safe-area-inset-bottom, 0px)' }}>
+          <span aria-hidden>▴</span> {t('globe.showPanel')}
+        </button>
+      )}
+
+      <div aria-hidden={panelHidden || undefined}
+        className={`absolute inset-x-3 bottom-3 transition-all duration-300 sm:inset-x-auto sm:bottom-6 sm:left-6 sm:w-[400px] ${panelHidden || moving ? 'pointer-events-none translate-y-6 opacity-0' : 'translate-y-0 opacity-100'} ${panelHidden ? 'invisible' : ''}`}
+        style={{ paddingBottom: 'env(safe-area-inset-bottom, 0px)' }}>
         <div className="slab max-h-[50vh] space-y-3 overflow-y-auto p-4 sm:max-h-[70vh] sm:space-y-4 sm:p-5">
           <section className="space-y-2">
-            <h2 className="eyebrow">1 · {t('globe.step1')}</h2>
+            <div className="flex items-center justify-between gap-2">
+              <h2 className="eyebrow">1 · {t('globe.step1')}</h2>
+              <button className="chip !px-2.5 !py-0.5 text-[11px]" onClick={() => setPanelHidden(true)}>
+                {t('globe.hidePanel')} <span aria-hidden>▾</span>
+              </button>
+            </div>
             <PlaceSearch />
             <div className="flex flex-wrap gap-2">
               {PRESETS.map((p) => (
@@ -198,7 +262,6 @@ export function GlobeIntro({ onDone }: { onDone: () => void }) {
                 {t('globe.analyse')}
               </button>
               <button className="chip !px-3 !py-1 text-xs" disabled={zoom < 5} onClick={useCentre}>{t('globe.usePoint')}</button>
-              <button className="chip !px-3 !py-1 text-xs" onClick={onDone}>{t('globe.skip')} <Icons.close size={11} /></button>
             </div>
             <p className="text-[11px] leading-snug text-slate">{t('globe.note')}</p>
           </section>

@@ -74,10 +74,17 @@
   .tab {
     @apply relative shrink-0 whitespace-nowrap px-1 py-2 font-display text-[11px] font-medium uppercase tracking-[0.12em] text-slate transition-colors sm:text-[12px] sm:tracking-[0.22em];
   }
-  /* MapLibre imagery credit on the globe: dark, readable, out of the way */
+  /* MapLibre imagery credit on the globe: dark, readable, out of the way (below the Skip button) */
+  .globe-intro .maplibregl-ctrl-top-right { top: calc(env(safe-area-inset-top, 0px) + 4.5rem); }
   .maplibregl-ctrl-attrib.maplibregl-compact { background: rgba(19, 21, 24, 0.75) !important; color: #A3A9B1; }
   .maplibregl-ctrl-attrib.maplibregl-compact .maplibregl-ctrl-attrib-inner { color: #A3A9B1; }
   .maplibregl-ctrl-attrib-button { filter: invert(1) brightness(0.8); }
+  /* draggable field corner on the 2D map (Leaflet divIcon) */
+  .field-vertex {
+    border-radius: 9999px; background: #F2EFEA; border: 2px solid #C98B66;
+    box-shadow: 0 0 0 2px rgba(0, 0, 0, 0.35), 0 0 8px rgba(255, 255, 255, 0.5); cursor: grab;
+  }
+  .field-vertex:active { cursor: grabbing; }
   /* horizontal scroller without a visible scrollbar (tab row on narrow phones) */
   .no-scrollbar { scrollbar-width: none; }
   .no-scrollbar::-webkit-scrollbar { display: none; }

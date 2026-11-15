@@ -68,10 +68,11 @@ const waitStatus = async (needle, ms, label) => {
 
 // Opening globe (MapLibre, WebGL): canvas renders under the CSP, then "Skip" opens the app
 try {
-  await page.waitForSelector('[role="dialog"] .maplibregl-canvas', { timeout: 15000 });
+  // cold start downloads the globe chunk and starts software WebGL in headless Chrome: allow 30 s
+  await page.waitForSelector('[role="dialog"] .maplibregl-canvas', { timeout: 30000 });
   console.log('globe: canvas rendered');
 } catch { problems.push('globe: canvas did not render'); }
-await click('Skip');
+await page.evaluate(() => document.querySelector('[data-action="skip-globe"]')?.click());
 try {
   await page.waitForFunction(() => !document.querySelector('.maplibregl-canvas'), { timeout: 5000 });
 } catch { problems.push('globe: Skip did not close the globe'); }
@@ -110,6 +111,18 @@ if (r1 !== 'ok') problems.push(r1);
 if (waterFirst !== 'Baseline') problems.push(`water-only priority: expected Baseline first, got ${waterFirst}`);
 if (incomeFirst !== 'Fihrist regenerative') problems.push(`income-only priority: expected Fihrist regenerative first, got ${incomeFirst}`);
 console.log(`re-ranking: water-only -> ${waterFirst}; income-only -> ${incomeFirst}`);
+
+// 2D field drawing: four corners on the zoomed-out preset map outline far more than 5,000 ha,
+// so the outline must be REJECTED (size cap), with the reason shown; then drawing is cancelled.
+await click('Draw field');
+{
+  const m = await page.evaluate(() => { const r = document.querySelector('.leaflet-container').getBoundingClientRect(); return { x: r.x, y: r.y, w: r.width, h: r.height }; });
+  for (const [fx, fy] of [[0.3, 0.3], [0.7, 0.3], [0.7, 0.7], [0.3, 0.7]]) { await page.mouse.click(m.x + m.w * fx, m.y + m.h * fy); await new Promise((r) => setTimeout(r, 250)); }
+  const alert = await page.evaluate(() => [...document.querySelectorAll('aside [role="alert"]')].map((e) => e.textContent).join(' '));
+  if (!/larger than 5,000 ha/.test(alert)) problems.push(`2D drawing: expected the size-cap rejection, got "${alert}"`);
+  console.log(`2D drawing (oversized outline): ${alert}`);
+}
+await click('Stop drawing');
 
 // Step 5: field-year timeline, charts and methodology content render from real engine output
 const step5 = await page.evaluate(() => {
