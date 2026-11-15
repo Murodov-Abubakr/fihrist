@@ -10,7 +10,7 @@ await page.emulateMediaFeatures([{ name: 'prefers-reduced-motion', value: 'reduc
 const errors = [];
 page.on('console', (m) => { if (m.type() === 'error' && !/404/.test(m.text())) errors.push(m.text()); });
 page.on('pageerror', (e) => errors.push(e.message));
-await page.goto(base, { waitUntil: 'networkidle0', timeout: 60000 });
+await page.goto(new URL('/?app', base).href, { waitUntil: 'networkidle0', timeout: 60000 }); // ?app skips the opening globe
 const click = (txt) => page.evaluate((t) => [...document.querySelectorAll('button')].find((b) => b.textContent?.trim() === t)?.click(), txt);
 if (preset) { await click(preset); await new Promise((r) => setTimeout(r, 2500)); }
 if (irrigation) { await click(irrigation); await new Promise((r) => setTimeout(r, 1500)); }

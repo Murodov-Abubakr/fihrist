@@ -1,5 +1,5 @@
 import { useEffect } from 'react';
-import { MapContainer, TileLayer, CircleMarker, useMap, useMapEvents } from 'react-leaflet';
+import { MapContainer, TileLayer, CircleMarker, Polygon, useMap, useMapEvents } from 'react-leaflet';
 import 'leaflet/dist/leaflet.css';
 import { useStore } from '../state';
 import { PRESETS } from '../data/presets';
@@ -30,7 +30,7 @@ function FlyTo({ lat, lon, zoom }: { lat: number; lon: number; zoom: number }) {
 export function FieldMap() {
   const { state } = useStore();
   const preset = PRESETS.find((p) => p.id === state.presetId);
-  const zoom = preset?.zoom ?? 8;
+  const zoom = state.field ? 15 : preset?.zoom ?? 8;
 
   return (
     <div className="relative h-56 overflow-hidden border border-brass/50 sm:h-64" style={{ borderRadius: '6px 6px 28px 6px' }}>
@@ -46,6 +46,10 @@ export function FieldMap() {
         {PRESETS.map((p) => (
           <CircleMarker key={p.id} center={[p.lat, p.lon]} radius={3.5} pathOptions={{ color: '#C98B66', weight: 1, fillColor: '#C98B66', fillOpacity: 0.7 }} />
         ))}
+        {state.field && (
+          <Polygon positions={state.field.ring.map(([lon, lat]) => [lat, lon] as [number, number])}
+            pathOptions={{ color: '#F2EFEA', weight: 2, fillColor: '#23A383', fillOpacity: 0.28 }} />
+        )}
         {/* reticle: dashed copper ring + white glowing core */}
         <CircleMarker center={[state.lat, state.lon]} radius={17} pathOptions={{ color: '#C98B66', weight: 1.2, opacity: 1, fill: false, dashArray: '2 4', className: 'reticle' }} />
         <CircleMarker center={[state.lat, state.lon]} radius={5} pathOptions={{ color: '#FFFFFF', weight: 1.5, fillColor: '#F2EFEA', fillOpacity: 1, className: 'reticle' }} />

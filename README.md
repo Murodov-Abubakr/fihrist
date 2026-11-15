@@ -11,13 +11,15 @@
 
 ## What it does
 
-Pick a field anywhere on Earth (map click, village search, or one of four presets). Fihrist pulls 24 years of daily NASA POWER weather for that point and compares **three crop rotations** — what the farmer does now, a water-saving rotation and a regenerative rotation — on:
+Start on a 3D globe, fly down to your land and tap the corners of your field — or use a map click, a village search, or one of four presets. Fihrist pulls 24 years of daily NASA POWER weather for that point and compares **three crop rotations** — what the farmer does now, a water-saving rotation and a regenerative rotation — on:
 
 - **water** — irrigation withdrawal or unmet crop water, m³/ha
 - **food** — people fed and protein per hectare
 - **soil nitrogen** — fixed vs removed, and its hidden replacement cost ("true profit")
 - **soil protection** — months of bare soil vs living roots
 - **risk** — P10 / P50 / P90 across 2,400 simulated futures, and climate-stress sliders (+0 to +3.5 °C, −40 % to +20 % rain)
+
+With an outlined field, results are also given for the whole field (e.g. cubic metres of canal water per year for your 2.4 ha). The outline sets the field's size, not its weather: NASA POWER describes a ~50 km cell.
 
 Each rotation card explains **why it is suggested, the NASA evidence, expected benefits, information gaps, and local risks** for a farmer or agronomist to review. Farmer priority sliders re-rank the rotations. The interface is available in English, Russian and Tajik.
 
@@ -51,7 +53,7 @@ Each rotation card explains **why it is suggested, the NASA evidence, expected b
 | Stress calendar | hot and frost days; heat + dry months as z-scores against the field's own 2001–2024 history | — |
 | Uncertainty | 2,400 twelve-year futures, year bootstrap of real NASA POWER years, common random numbers across rotations | — |
 
-The engine is plain TypeScript, runs in the browser, and is unit-tested (152 tests), including FAO-56 worked examples (e.g. Example 18, ET0 = 3.9 mm/day) and a closed soil-water balance.
+The engine is plain TypeScript, runs in the browser, and is unit-tested (165 tests), including FAO-56 worked examples (e.g. Example 18, ET0 = 3.9 mm/day) and a closed soil-water balance.
 
 ## Validation (Kansas)
 
@@ -83,7 +85,7 @@ The model follows real good and bad years, but its rainfed level is too low. Lik
 
 ## Architecture and security
 
-Vite + React + TypeScript + Tailwind, Leaflet, Recharts, i18next. Hosted on Cloudflare Pages; a Pages Function (`/api/simulate`) runs Monte Carlo batches at the edge, with browser Web Workers as fallback. NASA POWER is called directly from the browser; preset data is prefetched (`scripts/prefetch_power.py`).
+Vite + React + TypeScript + Tailwind, MapLibre GL (3D globe), Leaflet, Recharts, i18next. Hosted on Cloudflare Pages; a Pages Function (`/api/simulate`) runs Monte Carlo batches at the edge, with browser Web Workers as fallback. NASA POWER is called directly from the browser; preset data is prefetched (`scripts/prefetch_power.py`).
 
 Security follows an OWASP Top 10 audit ([SECURITY.md](SECURITY.md)): strict Content-Security-Policy without `unsafe-*`, host allowlist, input validation on every boundary, size and time limits, same-origin edge function, self-hosted fonts, pinned dependencies, `npm audit` clean.
 
@@ -103,7 +105,7 @@ Every permanent settlement beyond Earth will have to farm in a closed loop. Eart
 
 ## Roadmap
 
-Field outlines on a 3D globe; MODIS NDVI and SRTM slope inside each field; soil moisture in the compound-stress index; canal allocation limits; stage-specific water stress; local prices; Dari interface.
+MODIS NDVI and SRTM slope inside each outlined field; saving several fields; soil moisture in the compound-stress index; canal allocation limits; stage-specific water stress; local prices; Dari interface.
 
 ## Data and tools
 

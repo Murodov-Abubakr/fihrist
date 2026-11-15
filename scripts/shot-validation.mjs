@@ -5,7 +5,7 @@ const browser = await puppeteer.launch({ executablePath: 'C:/Program Files/Googl
 const page = await browser.newPage();
 await page.setViewport({ width: 1440, height: 1300 });
 await page.emulateMediaFeatures([{ name: 'prefers-reduced-motion', value: 'reduce' }]);
-await page.goto(base, { waitUntil: 'networkidle0', timeout: 60000 });
+await page.goto(new URL('/?app', base).href, { waitUntil: 'networkidle0', timeout: 60000 }); // ?app skips the opening globe
 await page.evaluate(() => document.querySelector('[data-action="validation"]')?.click());
 await page.waitForFunction(() => /Year-to-year r/.test(document.querySelector('[role="dialog"]')?.textContent ?? ''), { timeout: 10000 });
 await new Promise((r) => setTimeout(r, 800));

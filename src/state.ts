@@ -1,5 +1,6 @@
 import { createContext, useContext } from 'react';
 import type { PresetId } from './data/presets';
+import type { Field } from './lib/field';
 
 export type Mode = 'farmer' | 'scientist';
 export type Soil = 'sand' | 'loam' | 'clay';
@@ -17,6 +18,8 @@ export interface AppState {
   priorities: Record<PriorityKey, number>; // 0..100
   dT: number; // °C, 0..3.5
   dP: number; // %, -40..+20
+  /** field outlined on the globe (validated by makeField); cleared when the location moves elsewhere */
+  field: Field | null;
 }
 
 export const PRIORITY_KEYS: PriorityKey[] = ['water', 'nitrogen', 'erosion', 'organic', 'forage', 'income'];
@@ -32,6 +35,7 @@ export const initialState: AppState = {
   priorities: { water: 70, nitrogen: 50, erosion: 40, organic: 40, forage: 30, income: 60 },
   dT: 0,
   dP: 0,
+  field: null,
 };
 
 export interface Store {

@@ -21,7 +21,7 @@ function Wordmark() {
   );
 }
 
-export function TopBar({ onMethodology, onValidation }: { onMethodology: () => void; onValidation: () => void }) {
+export function TopBar({ onMethodology, onValidation, onGlobe }: { onMethodology: () => void; onValidation: () => void; onGlobe: () => void }) {
   const { t, i18n } = useTranslation();
   const { state, set } = useStore();
 
@@ -47,7 +47,8 @@ export function TopBar({ onMethodology, onValidation }: { onMethodology: () => v
           </button>
         </nav>
 
-        <div className="flex items-center gap-4">
+        <div className="flex items-center gap-3 sm:gap-4">
+          <button className="keycap" data-action="globe" onClick={onGlobe} title={t('globe.title')}>{t('globe.reopen')}</button>
           <div role="group" aria-label={t('nav.language')} className="flex items-center gap-1.5">
             {LANGS.map((l) => (
               <button key={l.code} className="keycap" aria-pressed={i18n.resolvedLanguage === l.code} onClick={() => i18n.changeLanguage(l.code)}>

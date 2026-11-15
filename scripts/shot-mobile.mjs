@@ -6,7 +6,7 @@ const page = await browser.newPage();
 await page.setViewport({ width: 390, height: 844, deviceScaleFactor: 2, isMobile: true, hasTouch: true });
 await page.emulateMediaFeatures([{ name: 'prefers-reduced-motion', value: 'reduce' }]);
 await page.evaluateOnNewDocument((l) => localStorage.setItem('fihrist.lang', l), lang);
-await page.goto(base, { waitUntil: 'networkidle0', timeout: 60000 });
+await page.goto(new URL('/?app', base).href, { waitUntil: 'networkidle0', timeout: 60000 }); // ?app skips the opening globe
 await new Promise((r) => setTimeout(r, 2500));
 await page.screenshot({ path: out });
 console.log('saved', out);

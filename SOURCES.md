@@ -125,3 +125,5 @@ Not modelled yet (shown as information gaps): runoff and capillary rise in the s
 | Satellite basemap | Esri World Imagery (Esri, Maxar, Earthstar Geographics, GIS User Community); attribution shown on map |
 | Fonts | Exo 2, Inter, IBM Plex Mono — self-hosted via @fontsource 5.3.0 (SIL Open Font License 1.1) |
 | Map library | Leaflet 1.9.4 (BSD-2) |
+| 3D globe | MapLibre GL JS 6.16.0 (BSD-3), globe projection, Esri World Imagery tiles |
+| Field area | Spherical polygon area, Chamberlain & Duquette (2007), "Some algorithms for polygons on a sphere", JPL Publication 07-03; mean Earth radius 6,371,008.8 m (IUGG). Whole-field totals = per-hectare results × area; the outline does not change the weather (NASA POWER ~50 km cell) |

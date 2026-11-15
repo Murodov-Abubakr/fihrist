@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useState } from 'react';
+import { lazy, Suspense, useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { MotionConfig } from 'framer-motion';
 import { initialState, StoreContext, type AppState } from './state';
@@ -11,6 +11,10 @@ import { Timeline } from './components/Timeline';
 import { Charts } from './components/Charts';
 import { Methodology } from './components/Methodology';
 import { Validation } from './components/Validation';
+import { FieldTotals } from './components/FieldTotals';
+
+// The globe (MapLibre GL, ~250 kB gzipped) loads in its own chunk, in parallel with the rest of the app.
+const GlobeIntro = lazy(() => import('./components/GlobeIntro').then((m) => ({ default: m.GlobeIntro })));
 import { Drawer } from './components/Drawer';
 import { ComputeGridPanel } from './components/ComputeGridPanel';
 import { useClimate } from './data/useClimate';
@@ -27,6 +31,14 @@ export default function App() {
   const closeMethod = useCallback(() => setMethodOpen(false), []);
   const [validOpen, setValidOpen] = useState(false);
   const closeValid = useCallback(() => setValidOpen(false), []);
+  // Opening globe: shown on every visit unless the URL asks to skip it (?app) — e.g. for direct links.
+  const [globeOpen, setGlobeOpen] = useState(() => !new URLSearchParams(window.location.search).has('app'));
+  const closeGlobe = useCallback(() => setGlobeOpen(false), []);
+  // An outline belongs to one place: drop it when the location moves elsewhere (map click, search, preset).
+  useEffect(() => {
+    const f = state.field;
+    if (f && (Math.abs(f.centroid.lat - state.lat) > 1e-6 || Math.abs(f.centroid.lon - state.lon) > 1e-6)) set({ field: null });
+  }, [state.lat, state.lon, state.field, set]);
   const { state: climate, retry } = useClimate(state.lat, state.lon, state.presetId);
 
   const series = climate.status === 'ready' ? climate.result.series : null;
@@ -43,7 +55,7 @@ export default function App() {
       {/* Framer Motion honours the OS "reduce motion" setting only when told to */}
       <MotionConfig reducedMotion="user">
       <SpaceMap />
-      <TopBar onMethodology={() => setMethodOpen(true)} onValidation={() => setValidOpen(true)} />
+      <TopBar onMethodology={() => setMethodOpen(true)} onValidation={() => setValidOpen(true)} onGlobe={() => setGlobeOpen(true)} />
       <Banner />
       <main className="mx-auto grid max-w-[1600px] gap-6 px-4 py-6 sm:px-6 lg:grid-cols-[minmax(320px,380px)_1fr]">
         <LeftPanel climate={climate} onRetry={retry} />
@@ -60,6 +72,7 @@ export default function App() {
               {t('band.stress', { dT: `${analysis!.dT >= 0 ? '+' : ''}${analysis!.dT.toFixed(1)}`, dP: `${analysis!.dP > 0 ? '+' : ''}${analysis!.dP}` })}
             </div>
           )}
+          <FieldTotals analysis={analysis} />
           <div className={`relative grid gap-x-6 gap-y-8 md:grid-cols-2 xl:grid-cols-3 ${stressed ? 'pt-2' : 'pt-10'}`}>
             {cards.map((id, i) => (
               <RotationCard key={id} id={id} total={cards.length} index={i} analysis={analysis} mc={mc.status === 'done' ? mc.summary : null} />
@@ -76,6 +89,11 @@ export default function App() {
       <Drawer open={validOpen} title={t('nav.validation')} onClose={closeValid}>
         <Validation soil={state.soil} />
       </Drawer>
+      {globeOpen && (
+        <Suspense fallback={<div className="fixed inset-0 z-[2000] bg-black" />}>
+          <GlobeIntro onDone={closeGlobe} />
+        </Suspense>
+      )}
       </MotionConfig>
     </StoreContext.Provider>
   );

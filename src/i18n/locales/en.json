@@ -252,5 +252,41 @@
     "sorghum": "Sorghum",
     "mung": "Mung",
     "cover": "Cover"
+  },
+  "globe": {
+    "title": "Find your field on Earth",
+    "step1": "Find your land",
+    "step2": "Outline your field",
+    "step3": "Analyse",
+    "zoomIn": "Zoom in closer to draw your field.",
+    "draw": "Draw field",
+    "stopDrawing": "Stop drawing",
+    "undo": "Undo",
+    "clear": "Clear",
+    "tapCorners": "Tap the corners of your field ({{n}} so far).",
+    "area": "Field area: {{ha}} ha",
+    "analyse": "Analyse this field",
+    "usePoint": "Use map centre",
+    "skip": "Skip",
+    "note": "Weather comes from the NASA POWER cell (~50 km). Your outline sets the field size, not the weather.",
+    "noWebgl": "This device cannot show the 3D globe. You can still use the map and presets.",
+    "reopen": "Globe",
+    "err": {
+      "vertices": "Use 3 to 60 corners.",
+      "coordinates": "A corner is outside the valid range.",
+      "antimeridian": "The outline cannot cross the 180° meridian.",
+      "tooLarge": "That is larger than 5,000 ha. Outline one field.",
+      "tooSmall": "The outline is too small."
+    }
+  },
+  "field": {
+    "title": "Your field: {{ha}} ha",
+    "water": "Irrigation water",
+    "waterRainfed": "Unmet crop water",
+    "people": "People fed",
+    "profit": "True profit",
+    "perYear": "per year, whole field",
+    "note": "Per-hectare results × your field area. The outline sets the size; weather and soil are for the whole NASA POWER cell.",
+    "clear": "Remove outline"
   }
 }

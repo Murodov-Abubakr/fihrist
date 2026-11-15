@@ -8,6 +8,8 @@ export default defineConfig({
   // `vite preview` serves the production build with the same headers as Cloudflare Pages
   // (public/_headers), so CSP breakage is caught locally before deploy.
   preview: { headers: SECURITY_HEADERS },
+  // Workers are bundled as ES modules (MapLibre creates its worker with { type: 'module' })
+  worker: { format: 'es' },
   build: {
     sourcemap: false,
     rollupOptions: {
@@ -18,6 +20,7 @@ export default defineConfig({
           motion: ['framer-motion'],
           i18n: ['i18next', 'react-i18next'],
           charts: ['recharts'],
+          globe: ['maplibre-gl'],
         },
       },
     },

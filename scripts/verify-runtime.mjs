@@ -8,7 +8,11 @@ const base = process.argv[2] ?? 'http://localhost:4174';
 const ALLOWED_HOSTS = new Set([new URL(base).host, 'server.arcgisonline.com', 'power.larc.nasa.gov', 'photon.komoot.io']);
 const problems = [];
 
-const browser = await puppeteer.launch({ executablePath: 'C:/Program Files/Google/Chrome/Application/chrome.exe', args: ['--disable-gpu-vsync', '--disable-frame-rate-limit'] /* render even if the host display sleeps */ });
+const browser = await puppeteer.launch({
+  executablePath: 'C:/Program Files/Google/Chrome/Application/chrome.exe',
+  // render even if the host display sleeps; software WebGL for the globe in headless Chrome
+  args: ['--disable-gpu-vsync', '--disable-frame-rate-limit', '--enable-unsafe-swiftshader', '--use-angle=swiftshader'],
+});
 const page = await browser.newPage();
 await page.setViewport({ width: 1440, height: 900 });
 // Functional checks run with reduced motion so they don't depend on animation timing
@@ -61,6 +65,16 @@ const waitStatus = async (needle, ms, label) => {
     problems.push(`${label}: expected "${needle}", got "${await statusText()}"`);
   }
 };
+
+// Opening globe (MapLibre, WebGL): canvas renders under the CSP, then "Skip" opens the app
+try {
+  await page.waitForSelector('[role="dialog"] .maplibregl-canvas', { timeout: 15000 });
+  console.log('globe: canvas rendered');
+} catch { problems.push('globe: canvas did not render'); }
+await click('Skip');
+try {
+  await page.waitForFunction(() => !document.querySelector('.maplibregl-canvas'), { timeout: 5000 });
+} catch { problems.push('globe: Skip did not close the globe'); }
 
 // Preset data file loads and validates in the browser
 await waitStatus('Preset file', 8000, 'preset climate data');

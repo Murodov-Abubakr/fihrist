@@ -74,6 +74,10 @@
   .tab {
     @apply relative shrink-0 whitespace-nowrap px-1 py-2 font-display text-[11px] font-medium uppercase tracking-[0.12em] text-slate transition-colors sm:text-[12px] sm:tracking-[0.22em];
   }
+  /* MapLibre imagery credit on the globe: dark, readable, out of the way */
+  .maplibregl-ctrl-attrib.maplibregl-compact { background: rgba(19, 21, 24, 0.75) !important; color: #A3A9B1; }
+  .maplibregl-ctrl-attrib.maplibregl-compact .maplibregl-ctrl-attrib-inner { color: #A3A9B1; }
+  .maplibregl-ctrl-attrib-button { filter: invert(1) brightness(0.8); }
   /* horizontal scroller without a visible scrollbar (tab row on narrow phones) */
   .no-scrollbar { scrollbar-width: none; }
   .no-scrollbar::-webkit-scrollbar { display: none; }
