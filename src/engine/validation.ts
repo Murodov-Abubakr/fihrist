@@ -14,7 +14,7 @@
  * (irrigated Kansas average, CSSA — independent of these NASS numbers, so this is a real out-of-sample check).
  */
 import type { DailyDerived, DailySeries } from './climate.ts';
-import { rotationDefs, simulateRotation } from './rotation.ts';
+import { rotationDefs, simulateRotation, type KyMode } from './rotation.ts';
 import type { Soil } from './soilwater.ts';
 
 export const BU_AC_TO_T_HA = 27.2155 / 0.404686 / 1000; // 60-lb bushel of wheat per acre → t/ha
@@ -46,8 +46,8 @@ export function pearson(x: number[], y: number[]): number {
   return sxx > 0 && syy > 0 ? sxy / Math.sqrt(sxx * syy) : 0;
 }
 
-export function validateKansasWheat(s: DailySeries, dd: DailyDerived, soil: Soil = 'loam'): ValidationResult {
-  const r = simulateRotation(s, dd, rotationDefs('wheat').baseline, { irrigation: 'rainfed', region: 'kansas', soil });
+export function validateKansasWheat(s: DailySeries, dd: DailyDerived, soil: Soil = 'loam', kyMode: KyMode = 'season'): ValidationResult {
+  const r = simulateRotation(s, dd, rotationDefs('wheat').baseline, { irrigation: 'rainfed', region: 'kansas', soil, kyMode });
   const rows: ValidationRow[] = r.seasons
     .filter((x) => x.crop === 'wheat' && NASS_KS_STATE_WHEAT_BU_AC[x.harvestYear] !== undefined)
     .map((x) => ({ year: x.harvestYear, observed: NASS_KS_STATE_WHEAT_BU_AC[x.harvestYear] * BU_AC_TO_T_HA, modelled: x.yieldT }));

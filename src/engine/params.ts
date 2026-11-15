@@ -30,6 +30,21 @@ export const KY: Record<CropId | 'cover', Param> = {
   cover: { value: 0, unit: '-', source: 'not harvested', quality: 'sourced' },
 };
 
+/**
+ * Stage-specific Ky (FAO-33) per FAO-56 stage [initial, development, mid-season, late], for crops where
+ * FAO gives stage values. Filled only from verified sources. Used only with kyMode 'stage': tested against
+ * USDA NASS in the Validation drawer (2026-11-15) it did NOT improve the fit (loam: level −49 % vs −45 %,
+ * r 0.66 vs 0.77), so the seasonal KY remains the default.
+ */
+export const KY_STAGES: Partial<Record<CropId, { ky: [number, number, number, number]; source: string; quality: 'sourced' | 'proxy' | 'todo'; note?: string }>> = {
+  wheat: {
+    ky: [0.2, 0.6, 0.5, 0],
+    source: 'FAO Water Report 22 (IAEA/FAO, Moutonnet), Table 1 "FAO yield response factors", Winter wheat: Tr.0111 (initial) 0.20, Tr.1011 (development) 0.60, Tr.1101 (mid-season) 0.50, Tr.1110 (late season) blank; https://www.fao.org/4/Y3655E/y3655e04.htm',
+    quality: 'sourced',
+    note: 'Late-season cell is blank in the FAO table; used as 0 (no listed yield effect). FAO gives no rule for combining stages; the multiplicative combination Π[1 − Ky_i(1 − ETa_i/ETc_i)] is a modelling choice (Rao et al. 1988), not an FAO rule.',
+  },
+};
+
 /* ───────────── Reference yield Ym under full water supply, t/ha ───────────── */
 export const YM: Record<RegionId, Record<CropId, Param>> = {
   centralAsia: {

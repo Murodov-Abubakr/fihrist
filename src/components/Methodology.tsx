@@ -150,7 +150,7 @@ export function Methodology() {
       <H>Not modelled yet (shown as information gaps)</H>
       <ul className="list-disc space-y-1 pl-5 text-[13px]">
         <li>Surface runoff and capillary rise in the soil water balance; roots are at full depth from sowing; one soil layer.</li>
-        <li>Stage-specific water-stress sensitivity (one seasonal Ky is used). In Kansas the rainfed wheat level is well below USDA averages — see Validation.</li>
+        <li>One seasonal Ky is used. FAO’s stage-specific Ky for wheat was tested against USDA NASS and fitted worse, so it is not used (see Validation). In Kansas the rainfed wheat level is well below USDA averages.</li>
         <li>Wheat winter dormancy; nitrogen losses (leaching, volatilisation); farm costs other than replacing nitrogen.</li>
         <li>Soil moisture and NDVI in the compound-stress index; canal allocation limits.</li>
         <li>Spatial resolution: POWER describes a ~50 km cell, a farm is ~1 ha.</li>

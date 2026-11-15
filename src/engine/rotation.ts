@@ -16,7 +16,7 @@ import { CROPS, type CropId, type CropParams } from './crops.ts';
 import { seasonLength } from './kc.ts';
 import { waterWindow, type Soil, type WaterWindow } from './soilwater.ts';
 import {
-  IRRIGATION_EFFICIENCY, KCAL_PER_PERSON_DAY, KY, N_FIXED, N_TO_PROTEIN, NUTRITION, PRICE_USD_T,
+  IRRIGATION_EFFICIENCY, KCAL_PER_PERSON_DAY, KY, KY_STAGES, N_FIXED, N_TO_PROTEIN, NUTRITION, PRICE_USD_T,
   UREA_N_SHARE, UREA_USD_T, YM, type Param, type RegionId,
 } from './params.ts';
 
@@ -223,6 +223,8 @@ export interface SimOptions {
   region: RegionId;
   /** soil texture for the root-zone water balance (default loam) */
   soil?: Soil;
+  /** FAO-33 yield response: whole season (default) or per growth stage where FAO gives stage values (tested in Validation) */
+  kyMode?: KyMode;
   /** first and last harvest year to report (inclusive) */
   fromYear?: number;
   toYear?: number;
@@ -242,15 +244,31 @@ function quantile(sorted: number[], q: number): number {
  */
 export function seasonWater(
   s: DailySeries, dd: DailyDerived, crop: PlantingCrop, startIdx: number, sowIdx: number, len: number,
-  irrigated: boolean, region: RegionId, soil: Soil, dr0: number,
+  irrigated: boolean, region: RegionId, soil: Soil, dr0: number, kyMode: KyMode = 'season',
 ): WaterWindow & { yieldT: number } {
   const w = waterWindow(s, dd, crop, startIdx, sowIdx, len, irrigated, soil, dr0);
-  let yieldT = 0;
-  if (crop !== 'cover') {
-    const ym = YM[region][crop].value;
-    yieldT = w.etc > 0 ? ym * Math.max(0, 1 - KY[crop].value * (1 - w.eta / w.etc)) : 0;
+  return { ...w, yieldT: crop === 'cover' ? 0 : yieldFromWater(crop, w, region, kyMode) };
+}
+
+export type KyMode = 'stage' | 'season';
+
+/**
+ * FAO-33 yield response. 'season': 1 − Ya/Ym = Ky (1 − ETa/ETc) over the whole season.
+ * 'stage' (crops with KY_STAGES only): reductions per growth stage combined multiplicatively,
+ * Ya/Ym = Π max(0, 1 − Ky_i (1 − ETa_i/ETc_i)) — see KY_STAGES for the source of values and rule.
+ */
+export function yieldFromWater(crop: CropId, w: Pick<WaterWindow, 'etc' | 'eta' | 'stageEtc' | 'stageEta'>, region: RegionId, kyMode: KyMode = 'season'): number {
+  const ym = YM[region][crop].value;
+  const st = KY_STAGES[crop];
+  if (kyMode === 'stage' && st) {
+    let rel = 1;
+    for (let i = 0; i < 4; i++) {
+      if (w.stageEtc[i] <= 0) continue;
+      rel *= Math.max(0, 1 - st.ky[i] * (1 - w.stageEta[i] / w.stageEtc[i]));
+    }
+    return ym * rel;
   }
-  return { ...w, yieldT };
+  return w.etc > 0 ? ym * Math.max(0, 1 - KY[crop].value * (1 - w.eta / w.etc)) : 0;
 }
 
 /** Food, nitrogen and money from one harvested season (cover crop → zeros). */
@@ -318,7 +336,7 @@ export function simulateRotation(s: DailySeries, dd: DailyDerived, def: Rotation
       for (let k = 0; k < len; k++) occupied[sowIdx + k] = code;
 
       const startIdx = prevEnd < 0 ? sowIdx : prevEnd + 1;
-      const w = seasonWater(s, dd, p.crop, startIdx, sowIdx, len, irrigated, opt.region, soil, prevEnd < 0 ? 0 : prevDepletion);
+      const w = seasonWater(s, dd, p.crop, startIdx, sowIdx, len, irrigated, opt.region, soil, prevEnd < 0 ? 0 : prevDepletion, opt.kyMode);
       if (prevEnd >= 0) gaps[j].push(sowIdx - startIdx);
       ends[j].push(w.endDepletion);
       prevEnd = sowIdx + len - 1;

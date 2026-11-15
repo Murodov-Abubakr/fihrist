@@ -71,6 +71,9 @@ export interface WaterWindow {
   deepPerc: number; // mm, whole window
   sowDepletion: number; // fraction of TAW at sowing (0 = field capacity, 1 = wilting point)
   endDepletion: number; // fraction of TAW at harvest/termination
+  /** crop ET demand and actual ET per FAO-56 stage (initial, development, mid-season, late), mm */
+  stageEtc: [number, number, number, number];
+  stageEta: [number, number, number, number];
 }
 
 /**
@@ -90,7 +93,10 @@ export function waterWindow(
   const rew = sp.rew.value;
   let dr = Math.max(0, Math.min(1, dr0)) * taw;
   let de = Math.min(tew, dr);
-  const out: WaterWindow = { etc: 0, eta: 0, netIrrigation: 0, et0: 0, rain: 0, fallowRain: 0, fallowEvap: 0, deepPerc: 0, sowDepletion: 0, endDepletion: 0 };
+  const out: WaterWindow = { etc: 0, eta: 0, netIrrigation: 0, et0: 0, rain: 0, fallowRain: 0, fallowEvap: 0, deepPerc: 0, sowDepletion: 0, endDepletion: 0, stageEtc: [0, 0, 0, 0], stageEta: [0, 0, 0, 0] };
+  // day index (from sowing) at which each FAO-56 stage ends; days past the table length count as late season
+  const [l1, l2, l3] = crop.stages;
+  const stageOf = (k: number) => (k < l1 ? 0 : k < l1 + l2 ? 1 : k < l1 + l2 + l3 ? 2 : 3);
   const end = sowIdx + len;
   for (let i = Math.max(0, startIdx); i < end; i++) {
     const p = s.prcp[i];
@@ -123,6 +129,9 @@ export function waterWindow(
     de = Math.min(tew, de + eta);
     out.etc += etc;
     out.eta += eta;
+    const st = stageOf(i - sowIdx);
+    out.stageEtc[st] += etc;
+    out.stageEta[st] += eta;
     out.et0 += et0;
     out.rain += p;
   }

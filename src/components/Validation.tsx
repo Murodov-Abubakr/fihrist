@@ -45,16 +45,17 @@ export function Validation({ soil }: { soil: Soil }) {
   const result = useMemo(() => {
     if (!series) return null;
     const dd = deriveDaily(series);
-    const v = validateKansasWheat(series, dd, soil);
+    const v = validateKansasWheat(series, dd, soil, 'season');
+    const vStage = validateKansasWheat(series, dd, soil, 'stage'); // sensitivity test, not used by the app
     const months = monthlyClimatology(series, dd);
     const pm = months.reduce((s, m) => s + m.et0, 0);
     const hg = months.reduce((s, m) => s + m.et0Harg, 0);
-    return { v, pm, hg };
+    return { v, vStage, pm, hg };
   }, [series, soil]);
 
   if (error) return <p className="text-sm text-terracotta-light">{error}</p>;
   if (!result) return <div className="flex h-40 items-center justify-center"><Astrolabe size={46} label={t('timeline.waiting')} /></div>;
-  const { v, pm, hg } = result;
+  const { v, vStage, pm, hg } = result;
   const rows = v.rows.map((r) => ({ year: r.year, observed: +r.observed.toFixed(2), modelled: +r.modelled.toFixed(2) }));
 
   return (
@@ -104,9 +105,27 @@ export function Validation({ soil }: { soil: Soil }) {
       <H>What this shows</H>
       <ul className="list-disc space-y-1.5 pl-5 text-[13px]">
         <li><b>The model follows real good and bad years</b> (r = {f(v.r)}): the weather signal from NASA POWER, the FAO-56 water balance and FAO-33 yield response move together with what Kansas farmers actually harvested.</li>
-        <li><b>The absolute level is too low</b> ({f(v.biasPct, 0)}%). Likely reasons, all listed as information gaps: (1) NASS is a statewide average that includes the wetter east and some irrigated fields, while the model point is in the drier west-central part of the state; (2) FAO-33 applies one seasonal Ky to the whole season, although water stress in autumn and winter costs wheat less than stress at flowering; (3) winter dormancy is not modelled; (4) bare-soil evaporation in the summer fallow (FAO-56 dual-coefficient terms) leaves little stored water at sowing.</li>
+        <li><b>The absolute level is too low</b> ({f(v.biasPct, 0)}%). Likely reasons, all listed as information gaps: (1) NASS is a statewide average that includes the wetter east and some irrigated fields, while the model point is in the drier west-central part of the state; (2) winter dormancy is not modelled, so the long autumn–winter development stage counts as water demand; (3) bare-soil evaporation in the summer fallow (FAO-56 dual-coefficient terms) leaves little stored water at sowing.</li>
         <li><b>Practical reading:</b> use Fihrist’s rainfed yields to compare rotations and years with each other, not as a yield forecast. Rainfed food numbers on the cards are likely conservative.</li>
       </ul>
+
+      <H>Tested and rejected: stage-specific water stress</H>
+      <p className="text-[13px]">We tested whether FAO’s stage-specific yield response factors for winter wheat (FAO Water Report 22, Table 1: initial 0.20, development 0.60, mid-season 0.50, late season blank → 0), combined multiplicatively across stages (Rao et al. 1988 — FAO gives no combination rule), would fit Kansas better than one seasonal factor (1.00). They did not, so the app keeps the seasonal factor.</p>
+      <div className="mt-3 overflow-x-auto">
+        <table className="num w-full min-w-[380px] text-right text-[12px]">
+          <thead className="text-[10.5px] uppercase tracking-[0.12em] text-slate">
+            <tr><th className="text-left font-normal">Method</th><th className="font-normal">r</th><th className="font-normal">Direction</th><th className="font-normal">Level</th><th className="font-normal">MAE t/ha</th></tr>
+          </thead>
+          <tbody className="text-parchment">
+            {([['Seasonal Ky (used)', v], ['Stage-specific Ky', vStage]] as const).map(([name, x]) => (
+              <tr key={name} className="border-t border-white/5">
+                <td className="py-1 text-left font-sans">{name}</td><td>{f(x.r)}</td><td>{x.directionHits}/{x.directionYears}</td>
+                <td>{x.biasPct > 0 ? '+' : ''}{f(x.biasPct, 0)}%</td><td>{f(x.mae)}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
 
       <H>Evapotranspiration: OpenET comparison</H>
       <p className="text-[13px]"><b>Pending.</b> OpenET field-scale ET needs data access (a free API key) that was not available during the build. Until then, an internal cross-check of reference ET at this site: FAO-56 Penman–Monteith <span className="num">{f(pm, 0)}</span> mm/yr vs Hargreaves <span className="num">{f(hg, 0)}</span> mm/yr ({hg > pm ? '+' : ''}{f((100 * (hg - pm)) / pm, 0)}%). This checks consistency between two methods; it is not a validation against measurements.</p>

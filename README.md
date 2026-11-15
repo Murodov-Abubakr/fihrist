@@ -53,7 +53,7 @@ Each rotation card explains **why it is suggested, the NASA evidence, expected b
 | Stress calendar | hot and frost days; heat + dry months as z-scores against the field's own 2001–2024 history | — |
 | Uncertainty | 2,400 twelve-year futures, year bootstrap of real NASA POWER years, common random numbers across rotations | — |
 
-The engine is plain TypeScript, runs in the browser, and is unit-tested (181 tests), including FAO-56 worked examples (e.g. Example 18, ET0 = 3.9 mm/day) and a closed soil-water balance.
+The engine is plain TypeScript, runs in the browser, and is unit-tested (182 tests), including FAO-56 worked examples (e.g. Example 18, ET0 = 3.9 mm/day) and a closed soil-water balance.
 
 ## Validation (Kansas)
 
@@ -65,7 +65,7 @@ Rainfed continuous winter wheat simulated at the Kansas preset vs **USDA NASS st
 | Same direction as NASS | **8 of 9** years |
 | Mean level | **−45 %** (model 1.64 vs NASS 2.99 t/ha) |
 
-The model follows real good and bad years, but its rainfed level is too low. Likely reasons — statewide average vs one dry west-central grid cell, a single seasonal Ky, no winter dormancy, and FAO bare-soil evaporation emptying the summer fallow — are shown in the app's Validation drawer. We report the gap rather than tune it away: rainfed numbers are for comparing rotations, not for forecasting a harvest. The OpenET evapotranspiration comparison is **pending** (needs data access).
+The model follows real good and bad years, but its rainfed level is too low. Likely reasons — statewide average vs one dry west-central grid cell, no winter dormancy, and FAO bare-soil evaporation emptying the summer fallow — are shown in the app's Validation drawer. FAO stage-specific water-stress factors were also tested and fitted worse, so they are not used. We report the gap rather than tune it away: rainfed numbers are for comparing rotations, not for forecasting a harvest. The OpenET evapotranspiration comparison is **pending** (needs data access).
 
 *Validated in Kansas where ground truth exists, applied in Tajikistan and Afghanistan where it does not.*
 
@@ -78,7 +78,7 @@ The model follows real good and bad years, but its rainfed level is too low. Lik
 ## Limitations
 
 - NASA POWER describes a ~50 km cell; a farm is ~1 ha.
-- Not yet modelled: runoff and capillary rise, stage-specific water stress, wheat winter dormancy, nitrogen losses, canal allocation limits, farm costs other than nitrogen.
+- Not yet modelled: runoff and capillary rise, wheat winter dormancy, nitrogen losses, canal allocation limits, farm costs other than nitrogen.
 - Several yields and prices are proxies (listed in each card and in SOURCES.md); local prices should replace international ones.
 - The compound-stress index uses 2 of 4 planned signals (soil moisture and NDVI pending).
 - Russian and Tajik text needs native review.
@@ -105,7 +105,7 @@ Every permanent settlement beyond Earth will have to farm in a closed loop. Eart
 
 ## Roadmap
 
-MODIS NDVI and SRTM slope inside each outlined field; saving several fields; soil moisture in the compound-stress index; canal allocation limits; stage-specific water stress; local prices; Dari interface.
+MODIS NDVI and SRTM slope inside each outlined field; saving several fields; soil moisture in the compound-stress index; canal allocation limits; local prices; Dari interface.
 
 ## Data and tools
 

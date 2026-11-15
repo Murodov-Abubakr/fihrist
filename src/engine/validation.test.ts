@@ -27,4 +27,12 @@ describe('Kansas validation (model vs USDA NASS)', () => {
     expect(v.directionHits).toBeGreaterThanOrEqual(7);
     expect(v.biasPct).toBeLessThan(0); // known: modelled rainfed level is below the statewide average
   });
+  it('records the stage-specific Ky test: it does not beat the seasonal Ky (so seasonal stays the default)', () => {
+    const dd = deriveDaily(kansas);
+    const season = validateKansasWheat(kansas, dd, 'loam', 'season');
+    const stage = validateKansasWheat(kansas, dd, 'loam', 'stage');
+    expect(stage.rows.map((x) => x.modelled)).not.toEqual(season.rows.map((x) => x.modelled)); // the stage path is really used
+    expect(stage.r).toBeLessThan(season.r);
+    expect(validateKansasWheat(kansas, dd).r).toBeCloseTo(season.r, 12); // default = seasonal
+  });
 });

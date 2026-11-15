@@ -110,6 +110,7 @@ Simplifications: no runoff, no capillary rise, roots at full depth from sowing, 
 | OpenET ET | not retrieved — **pending** | needs an OpenET API key |
 | Result (loam, 2026-11-15) | r = 0.77, direction 8/9, level −45 %, MAE 1.34 t/ha | computed live in the drawer; regression-guarded in `validation.test.ts` |
 | Sensitivity (not used in the app) | without the Kcb,bare diffusive fallow term: level −29 %, r = 0.85 | `scripts/validation-table.mts` with KCB_BARE = 0; reported only, the FAO default is kept |
+| Stage-specific Ky test (not used) | Winter wheat Ky per stage 0.20 / 0.60 / 0.50 / blank→0 (FAO Water Report 22 Table 1, https://www.fao.org/4/Y3655E/y3655e04.htm), combined multiplicatively (Rao et al. 1988 — FAO states no combination rule). Loam: r = 0.66, level −49 % vs seasonal r = 0.77, −45 % | Rejected: worse fit; seasonal Ky 1.00 stays the default. Shown live in the Validation drawer; locked by `validation.test.ts` |
 
 ## Field year and stress calendar (`src/engine/stress.ts`, `RotationResult.calendar`)
 | Item | Choice | Source / rationale |
