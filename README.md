@@ -50,10 +50,11 @@ Each rotation card explains **why it is suggested, the NASA evidence, expected b
 | Food | kcal and protein from USDA FoodData Central; people fed = kcal / (2,200 × 365) | USDA FDC |
 | Nitrogen | removal = grain protein / 6.25; legume fixation (one source, scaled by yield) | FAO FNP 77; GRDC 2015 |
 | Hidden nitrogen cost | N debt / 0.46 × urea price → true profit | World Bank Pink Sheet |
-| Stress calendar | hot and frost days; heat + dry months as z-scores against the field's own 2001–2024 history | — |
+| Stress calendar | hot and frost days; Fihrist Compound Stress Index from up to four z-scores against the field's own 2001–2024 history: heat, dryness, root-zone wetness, cropland NDVI | NASA POWER; MODIS MOD13Q1 |
+| Satellite layers (presets) | MODIS Terra NDVI averaged over ESA WorldCover cropland within 5 km; NASA POWER root-zone wetness (GWETROOT); NASADEM slope | Microsoft Planetary Computer |
 | Uncertainty | 2,400 twelve-year futures, year bootstrap of real NASA POWER years, common random numbers across rotations | — |
 
-The engine is plain TypeScript, runs in the browser, and is unit-tested (182 tests), including FAO-56 worked examples (e.g. Example 18, ET0 = 3.9 mm/day) and a closed soil-water balance.
+The engine is plain TypeScript, runs in the browser, and is unit-tested (196 tests), including FAO-56 worked examples (e.g. Example 18, ET0 = 3.9 mm/day) and a closed soil-water balance.
 
 ## Validation (Kansas)
 
@@ -69,6 +70,26 @@ The model follows real good and bad years, but its rainfed level is too low. Lik
 
 *Validated in Kansas where ground truth exists, applied in Tajikistan and Afghanistan where it does not.*
 
+## What only the combination shows
+
+Weather, soil water and satellite greenness usually sit in separate tools. Fihrist puts them on one monthly grid and asks where they **disagree**:
+
+- **Compound stress month:** at least max(2, n − 1) of the n available signals are abnormal (z > 1) at the same time.
+- **Unexplained vegetation stress:** crops much less green than usual (NDVI z > 1.5) while heat, rain and soil water were all normal (z < 0.5). The cause lies outside the weather record: a canal cut, failed sowing, pests, land-use change, or something no dataset here measures.
+- **Green despite drought:** a dry month (rain or soil-water z > 1) in which crops stayed at least as green as usual. This usually means irrigation buffered the field.
+
+These are flagged as **questions for the farmer**, not conclusions. Thresholds are project choices, listed in SOURCES.md.
+
+**A first result (a hypothesis, not proof).** Both Gissar (Tajikistan) and Balkh (Afghanistan), about 250 km apart, show unexplained vegetation stress in **March–April 2012**. Weather, rain and soil water look normal for those months, yet crops were far less green: Gissar NDVI 0.26 vs a normal of 0.42 in March. The weather record holds a candidate cause that the index does not yet use: the 2011–12 winter was unusually cold at both sites.
+
+| Winter 2011–12 | Gissar | Balkh |
+|---|---|---|
+| Frost days, February (normal) | 27 (19.1) | 21 (9.6) |
+| Frost days, March (normal) | 19 (7.5) | 8 (2.5) |
+| Days ≤ −10 °C, February (normal) | 8 (1.6) | 0 (0.2) |
+
+Winter-kill or delayed green-up after a hard winter would fit this pattern. It needs confirmation from field reports before it is treated as a finding. A fifth signal, winter cold, is the obvious next step. NASA POWER is a ~50 km grid, and this local frost record has not been cross-checked against station data.
+
 ## Honest findings
 
 - In irrigated Gissar, the "water-saving" rotation uses **more** water than continuous wheat (it adds summer crops); against a wheat–cotton baseline it saves water.
@@ -80,7 +101,7 @@ The model follows real good and bad years, but its rainfed level is too low. Lik
 - NASA POWER describes a ~50 km cell; a farm is ~1 ha.
 - Not yet modelled: runoff and capillary rise, wheat winter dormancy, nitrogen losses, canal allocation limits, farm costs other than nitrogen.
 - Several yields and prices are proxies (listed in each card and in SOURCES.md); local prices should replace international ones.
-- The compound-stress index uses 2 of 4 planned signals (soil moisture and NDVI pending).
+- Satellite layers (NDVI, soil wetness, slope) are precomputed for the four presets only; an outlined field elsewhere uses heat and dryness. NDVI is a 5 km cropland average, not the outlined field. Some 16-day composites failed to download; the app shows the count used.
 - Russian and Tajik text needs native review.
 
 ## Architecture and security
@@ -105,8 +126,12 @@ Every permanent settlement beyond Earth will have to farm in a closed loop. Eart
 
 ## Roadmap
 
-MODIS NDVI and SRTM slope inside each outlined field; saving several fields; soil moisture in the compound-stress index; canal allocation limits; local prices; Dari interface.
+- **Any field, on demand:** compute NDVI, soil wetness and slope for the exact outline, running next to the data in the cloud (Planetary Computer data is hosted in Azure West Europe).
+- **Winter cold as a fifth signal**, to test the 2012 hypothesis above.
+- **Check against open ground truth:** AmeriFlux flux towers and PhenoCam cameras (greenness and water use), USDA SCAN and Kansas Mesonet soil moisture, USDA Cropland Data Layer rotations, NOAA GHCN station data for Dushanbe.
+- **Farmers without internet:** an SMS summary of the next month's risks; phone photos as optional ground truth.
+- Saving several fields, canal allocation limits, local prices, Dari interface.
 
 ## Data and tools
 
-NASA POWER (NASA Langley Research Center) · FAO-56 and FAO-33 (Food and Agriculture Organization of the United Nations) · USDA FoodData Central and USDA NASS · World Bank Commodity Price Data · GRDC · ICARDA · OpenStreetMap via Photon (Komoot) · Esri World Imagery · Cloudflare Pages. Full list with links: [SOURCES.md](SOURCES.md).
+NASA POWER (NASA Langley Research Center) · NASA MODIS MOD13Q1 (LP DAAC) · NASADEM · ESA WorldCover 2021 · Microsoft Planetary Computer · FAO-56 and FAO-33 (Food and Agriculture Organization of the United Nations) · USDA FoodData Central and USDA NASS · World Bank Commodity Price Data · GRDC · ICARDA · OpenStreetMap via Photon (Komoot) · Esri World Imagery · Cloudflare Pages. Full list with links: [SOURCES.md](SOURCES.md).
