@@ -8,6 +8,7 @@
  *  - https://server.arcgisonline.com      Esri World Imagery map tiles (img-src for the 2D Leaflet map;
  *                                         connect-src for the 3D globe, where MapLibre fetches tiles with fetch())
  *  - https://photon.komoot.io             place search / geocoding, OpenStreetMap data (connect-src)
+ *  - https://fihrist-sat-auoxh.azurewebsites.net  Fihrist satellite function (Azure, North Europe; on button press only)
  */
 export const CSP = [
   "default-src 'self'",
@@ -15,7 +16,7 @@ export const CSP = [
   "style-src 'self'",
   "img-src 'self' data: https://server.arcgisonline.com",
   "font-src 'self'",
-  "connect-src 'self' https://power.larc.nasa.gov https://photon.komoot.io https://server.arcgisonline.com",
+  "connect-src 'self' https://fihrist-sat-auoxh.azurewebsites.net https://power.larc.nasa.gov https://photon.komoot.io https://server.arcgisonline.com",
   "worker-src 'self'",
   "object-src 'none'",
   "base-uri 'self'",

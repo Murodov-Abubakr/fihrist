@@ -5,7 +5,7 @@
 import puppeteer from 'puppeteer-core';
 
 const base = process.argv[2] ?? 'http://localhost:4174';
-const ALLOWED_HOSTS = new Set([new URL(base).host, 'server.arcgisonline.com', 'power.larc.nasa.gov', 'photon.komoot.io']);
+const ALLOWED_HOSTS = new Set([new URL(base).host, 'server.arcgisonline.com', 'power.larc.nasa.gov', 'photon.komoot.io', 'fihrist-sat-auoxh.azurewebsites.net']);
 const problems = [];
 
 const browser = await puppeteer.launch({

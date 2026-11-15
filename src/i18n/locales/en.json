@@ -133,7 +133,7 @@
     "cloudHint": "Computes crop greenness (MODIS NDVI over cropland within 5 km), soil wetness and slope for this point in the cloud, next to the Microsoft Planetary Computer data. Takes about 1–3 minutes.",
     "cloudError": "The satellite analysis did not finish. The weather-based analysis above is unaffected; try again later.",
     "cloudBusy": "The satellite service is busy with another field. Try again in a minute.",
-    "cloudDone": "Satellite layers computed on demand in Azure (West Europe) from Microsoft Planetary Computer: {{n}} MODIS composites used."
+    "cloudDone": "Satellite layers computed on demand in Azure (North Europe) from Microsoft Planetary Computer: {{n}} MODIS composites used."
   },
   "charts": {
     "title": "Ten years on this field",

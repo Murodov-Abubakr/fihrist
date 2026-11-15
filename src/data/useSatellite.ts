@@ -9,7 +9,7 @@ const MAX_BYTES = 2_000_000;
  * On-demand satellite analysis for any point: an Azure Function in West Europe, next to the Microsoft Planetary
  * Computer storage, runs the same method as the preset prefetch. Empty string = feature off.
  */
-export const SAT_API = '';
+export const SAT_API = 'https://fihrist-sat-auoxh.azurewebsites.net/api/sat';
 export const SAT_API_TIMEOUT_MS = 240_000;
 
 export type SatStatus = 'none' | 'loading' | 'ready' | 'error' | 'available' | 'busy';

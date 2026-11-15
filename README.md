@@ -101,7 +101,7 @@ Winter-kill or delayed green-up after a hard winter would fit this pattern. The 
 - NASA POWER describes a ~50 km cell; a farm is ~1 ha.
 - Not yet modelled: runoff and capillary rise, wheat winter dormancy, nitrogen losses, canal allocation limits, farm costs other than nitrogen.
 - Several yields and prices are proxies (listed in each card and in SOURCES.md); local prices should replace international ones.
-- Satellite layers (NDVI, soil wetness, slope) are precomputed for the four presets only; an outlined field elsewhere uses heat and dryness. NDVI is a 5 km cropland average, not the outlined field. Some 16-day composites failed to download; the app shows the count used.
+- Satellite layers (NDVI, soil wetness, slope) are precomputed for the four presets. For any other point they are computed on request ("Run satellite analysis") by an Azure Function in North Europe, next to the Planetary Computer storage (about 20 s); without that, only heat and dryness are used. NDVI is a 5 km cropland average, not the outlined field. Some 16-day composites failed to download; the app shows the count used.
 - Russian and Tajik text needs native review.
 
 ## Architecture and security
@@ -126,7 +126,7 @@ Every permanent settlement beyond Earth will have to farm in a closed loop. Eart
 
 ## Roadmap
 
-- **Any field, on demand:** compute NDVI, soil wetness and slope for the exact outline, running next to the data in the cloud (Planetary Computer data is hosted in Azure West Europe).
+- **The exact outline:** satellite layers for the outlined polygon itself rather than a 5 km cropland average (the on-demand Azure service already covers any point).
 - **Winter cold as a fifth signal**, to test the 2012 hypothesis above.
 - **Check against open ground truth:** AmeriFlux flux towers and PhenoCam cameras (greenness and water use), USDA SCAN and Kansas Mesonet soil moisture, USDA Cropland Data Layer rotations, NOAA GHCN station data for Dushanbe.
 - **Farmers without internet:** an SMS summary of the next month's risks; phone photos as optional ground truth.
