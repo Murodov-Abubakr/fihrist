@@ -72,8 +72,11 @@
 
   /* Tab (top navigation): grey caps, active = bright with copper underline */
   .tab {
-    @apply relative px-1 py-2 font-display text-[12px] font-medium uppercase tracking-[0.22em] text-slate transition-colors;
+    @apply relative shrink-0 whitespace-nowrap px-1 py-2 font-display text-[11px] font-medium uppercase tracking-[0.12em] text-slate transition-colors sm:text-[12px] sm:tracking-[0.22em];
   }
+  /* horizontal scroller without a visible scrollbar (tab row on narrow phones) */
+  .no-scrollbar { scrollbar-width: none; }
+  .no-scrollbar::-webkit-scrollbar { display: none; }
   .tab:hover { @apply text-parchment; }
   .tab[aria-pressed='true'] { @apply text-parchment; }
   .tab[aria-pressed='true']::after {

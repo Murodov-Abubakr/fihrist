@@ -33,7 +33,7 @@ export function TopBar({ onMethodology, onValidation }: { onMethodology: () => v
       <div className="mx-auto flex max-w-[1600px] flex-wrap items-center justify-between gap-x-6 gap-y-2 px-4 py-2.5 sm:px-6">
         <Wordmark />
 
-        <nav aria-label={t('nav.mode')} className="order-3 flex w-full items-center gap-5 sm:order-none sm:w-auto sm:gap-8">
+        <nav aria-label={t('nav.mode')} className="no-scrollbar order-3 -mx-1 flex w-[calc(100%+0.5rem)] min-w-0 items-center gap-4 overflow-x-auto px-1 pb-1 sm:order-none sm:mx-0 sm:w-auto sm:gap-8 sm:overflow-visible sm:px-0 sm:pb-0">
           {(['farmer', 'scientist'] as const).map((m) => (
             <button key={m} className="tab" aria-pressed={state.mode === m} onClick={() => set({ mode: m })}>
               {t(`nav.${m}`)}
