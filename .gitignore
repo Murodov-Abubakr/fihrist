@@ -28,3 +28,4 @@ PROMPT.md
 
 # Azure function build artefact
 azure/sat-function/*.zip
+azure/sat-function/*-rollback.zip
