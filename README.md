@@ -3,9 +3,17 @@
 **Crop-rotation decision support for water-stressed farms, built on NASA data.**
 2026 NASA Space Apps Challenge — *Field Shift: Adapting Farms with NASA Data*.
 
-**Live app:** https://app.fihrist.earth · **License:** MIT
+**Live app:** https://app.fihrist.earth · **Website:** https://fihrist.earth · **License:** MIT · **Submitted version:** tag `space-apps-2026`
 
 > Fihrist supports, and does not replace, farmer and agronomist judgment.
+
+![Fihrist home page with the 3D crop-field hologram](docs/img/home.png)
+
+| Pick your field on a 3D globe | Compare three rotations |
+|---|---|
+| ![Globe field picker](docs/img/globe.png) | ![Rotation cards](docs/img/app-farmer.png) |
+
+![Your field in 3D: plots, corner coordinates, rotation per plot](docs/img/field-3d.png)
 
 ---
 
@@ -127,7 +135,10 @@ Every permanent settlement beyond Earth will have to farm in a closed loop. Eart
 ## Roadmap
 
 - **The exact outline:** satellite layers for the outlined polygon itself rather than a 5 km cropland average (the on-demand Azure service already covers any point).
-- **Winter cold as a fifth signal**, to test the 2012 hypothesis above.
+- **Built on the `dev` branch, not yet in the app:** a 10-day forecast endpoint (Meteomatics, via Azure) for heat, frost and heavy-rain warnings; a crop-pattern detector from the NDVI curve (winter cereal / summer crop / both seasons), to be validated against the USDA Cropland Data Layer in Kansas.
+- **AI explanations** in Tajik, Russian and Dari that may only use numbers the app has computed (checked automatically), and a **Telegram bot** that answers a shared location with the field's risks.
+- **Accounts** for farmers, scientists and organisations (saved fields, alerts, portfolio reports), an **open API** for partners, and gross margin per hectare with local costs.
+- **Beyond Earth:** compare Earth farms with NASA's measured closed-chamber crop experiments on the same self-sufficiency metrics.
 - **Check against open ground truth:** AmeriFlux flux towers and PhenoCam cameras (greenness and water use), USDA SCAN and Kansas Mesonet soil moisture, USDA Cropland Data Layer rotations, NOAA GHCN station data for Dushanbe.
 - **Farmers without internet:** an SMS summary of the next month's risks; phone photos as optional ground truth.
 - Saving several fields, canal allocation limits, local prices, Dari interface.
