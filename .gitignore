@@ -21,3 +21,7 @@ __pycache__/
 .cache/
 cache/
 *.log
+
+# Build plan files (local only)
+CLAUDE.md
+PROMPT.md
