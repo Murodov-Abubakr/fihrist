@@ -17,7 +17,8 @@ export const POWER_PARAMS = ['T2M_MAX', 'T2M_MIN', 'PRECTOTCORR', 'ALLSKY_SFC_SW
 /** Full calendar years only (2025 is incomplete at build time). */
 export const POWER_START_YEAR = 2001;
 export const POWER_END_YEAR = 2024;
-export const FETCH_TIMEOUT_MS = 10_000;
+/** POWER's 24-year daily request regularly takes 10–20 s (measured 2026-11-15); presets never wait on it. */
+export const FETCH_TIMEOUT_MS = 25_000;
 export const MAX_RESPONSE_BYTES = 3_000_000; // expected ~370 kB for 24 years
 const FILL = -999;
 /** Reject a column if more than this share of days is missing. */

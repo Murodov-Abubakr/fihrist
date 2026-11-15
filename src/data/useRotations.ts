@@ -2,7 +2,8 @@ import { useMemo } from 'react';
 import { monthlyClimatology, type MonthClimate } from '../engine/climate.ts';
 import type { Derived } from './useDerived.ts';
 import { regionOf, type RegionId } from '../engine/params.ts';
-import { stressCalendar } from '../engine/stress.ts';
+import { stressCalendar, type ExtraSignals } from '../engine/stress.ts';
+import type { SatFile } from '../engine/satellite.ts';
 import type { Soil } from '../engine/soilwater.ts';
 import { rankRotations, type PriorityKey, type RankedRotation } from '../engine/ranking.ts';
 import { rotationDefs, simulateRotation, type BaselineSpec, type Irrigation, type RotationId, type RotationResult } from '../engine/rotation.ts';
@@ -22,6 +23,8 @@ export interface Analysis {
   climate: ClimateSummary;
   /** hot/frost days and heat + dry compound months from this field's own history (with climate deltas applied) */
   stress: ReturnType<typeof stressCalendar>;
+  /** prefetched satellite layers for presets (null elsewhere: shown as an information gap) */
+  sat: SatFile | null;
   region: RegionId;
   outOfRegion: boolean;
   irrigation: Irrigation;
@@ -48,18 +51,20 @@ function useSimulation(derived: Derived | null, irrigation: Irrigation, baseline
       et0: sum((m) => m.et0), rain: sum((m) => m.rain), peff: sum((m) => m.peff),
       julyTmax: months[series.lat >= 0 ? 6 : 0].tmax, frostDays: sum((m) => m.frostDays), elevation: series.elevation, months,
     };
-    const stress = stressCalendar(series);
-    return { results, climate, stress, region, outOfRegion, dT: derived.dT, dP: derived.dP };
+    return { results, climate, region, outOfRegion, dT: derived.dT, dP: derived.dP };
   }, [derived, irrigation, baseline, soil]);
 }
 
-export function useRotations(derived: Derived | null, irrigation: Irrigation, baseline: BaselineSpec, priorities: Record<PriorityKey, number>, soil: Soil): Analysis | null {
+export function useRotations(derived: Derived | null, irrigation: Irrigation, baseline: BaselineSpec, priorities: Record<PriorityKey, number>, soil: Soil, sat: { file: SatFile | null; extra: ExtraSignals } = { file: null, extra: {} }): Analysis | null {
   const sim = useSimulation(derived, irrigation, baseline, soil);
+  // satellite layers only describe the preset point: use them only when the series is that point
+  const extra = sat.file && derived && Math.abs(sat.file.lat - derived.series.lat) < 1e-6 && Math.abs(sat.file.lon - derived.series.lon) < 1e-6 ? sat.extra : null;
+  const stress = useMemo(() => (derived ? stressCalendar(derived.series, extra ?? {}) : null), [derived, extra]);
   return useMemo(() => {
-    if (!sim) return null;
+    if (!sim || !stress) return null;
     const list = rankRotations(ROTATION_IDS.map((id) => sim.results[id]), priorities, irrigation);
     const ranked = Object.fromEntries(list.map((r) => [r.id, r])) as Record<RotationId, RankedRotation>;
     const order = [...list].sort((a, b) => a.rank - b.rank).map((r) => r.id);
-    return { ...sim, ranked, order, irrigation };
-  }, [sim, priorities, irrigation]);
+    return { ...sim, stress, sat: extra ? sat.file : null, ranked, order, irrigation };
+  }, [sim, stress, extra, sat.file, priorities, irrigation]);
 }

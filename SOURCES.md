@@ -112,6 +112,27 @@ Simplifications: no runoff, no capillary rise, roots at full depth from sowing, 
 | Sensitivity (not used in the app) | without the Kcb,bare diffusive fallow term: level −29 %, r = 0.85 | `scripts/validation-table.mts` with KCB_BARE = 0; reported only, the FAO default is kept |
 | Stage-specific Ky test (not used) | Winter wheat Ky per stage 0.20 / 0.60 / 0.50 / blank→0 (FAO Water Report 22 Table 1, https://www.fao.org/4/Y3655E/y3655e04.htm), combined multiplicatively (Rao et al. 1988 — FAO states no combination rule). Loam: r = 0.66, level −49 % vs seasonal r = 0.77, −45 % | Rejected: worse fit; seasonal Ky 1.00 stays the default. Shown live in the Validation drawer; locked by `validation.test.ts` |
 
+## Satellite layers for the presets (`scripts/prefetch-satellite.mjs` → `public/data/presets/{id}-sat.json`, added 2026-11-15)
+Fetched from the Microsoft Planetary Computer STAC API (https://planetarycomputer.microsoft.com, no account; read-only SAS tokens per storage container) and NASA POWER.
+
+| Layer | Dataset | Method |
+|---|---|---|
+| Crop greenness | MODIS Terra MOD13Q1 v061 NDVI, 250 m, 16-day, 2001–2024 (NASA LP DAAC; Planetary Computer `modis-13Q1-061`) | Mean NDVI over MODIS pixels that are ≥ 50 % cropland (5 × 5 sample grid per pixel) within 5 km of the preset; fill value −3000 excluded; monthly mean of composites by start date |
+| Cropland mask | ESA WorldCover 10 m v200 (2021), class 40 "Cropland" (Planetary Computer `esa-worldcover`) | Needed because preset points can sit in towns (Gissar: 8.8 % cropland within 5 km of the Dushanbe point) |
+| Soil moisture | NASA POWER monthly GWETROOT (root-zone soil wetness, 0–1) and GWETTOP | Monthly values 2001–2024 |
+| Terrain | NASADEM 1 arc-second (Planetary Computer `nasadem`) | Slope by Horn (1981) third-order finite differences over 13 × 13 cells (~400 m); mean and max |
+
+A layer that fails to download is stored as an information gap, never as evidence. For points other than the presets, only the weather signals are used (shown in the app).
+
+## Fihrist Compound Stress Index and decoupling detector (`src/engine/stress.ts`)
+| Item | Choice | Rationale |
+|---|---|---|
+| Signals | heat (+z Tmax), dryness (−z rain), soil (−z GWETROOT), vegetation (−z cropland NDVI), each against the same calendar month in all years | CLAUDE.md §5 eq. 11 |
+| Defined only where meaningful | dryness if mean rain ≥ 10 mm; vegetation if mean NDVI ≥ 0.2; every signal ≥ 10 years | project choices |
+| Compound month | ≥ max(2, n − 1) of the n defined signals with z > 1 (3 of 4; both of 2) | project choice; reduces to the earlier 2-signal rule without satellite data |
+| Unexplained vegetation stress | vegetation z > 1.5 while every defined weather/soil z < 0.5 | project choice — flags causes outside the climate record (irrigation cut, sowing failure, pests, land-use change) as questions, not conclusions |
+| Green despite drought | dryness or soil z > 1 while vegetation z < 0 | project choice — indicates buffering, most likely irrigation |
+
 ## Field year and stress calendar (`src/engine/stress.ts`, `RotationResult.calendar`)
 | Item | Choice | Source / rationale |
 |---|---|---|

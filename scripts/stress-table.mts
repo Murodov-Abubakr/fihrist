@@ -1,15 +1,26 @@
-// Stress calendar per preset (checkpoint helper). Run: node scripts/stress-table.mts
-import { readFileSync } from 'node:fs';
-import { stressCalendar } from '../src/engine/stress.ts';
+// Stress calendar per preset, with satellite layers when prefetched. Run: node scripts/stress-table.mts
+import { existsSync, readFileSync } from 'node:fs';
+import { stressCalendar, type ExtraSignals } from '../src/engine/stress.ts';
+import { monthlyNdvi, monthlyWetness, validateSat } from '../src/engine/satellite.ts';
 
+const M = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
 for (const id of ['gissar', 'khatlon', 'balkh', 'kansas']) {
   const s = JSON.parse(readFileSync(new URL(`../public/data/presets/${id}.json`, import.meta.url), 'utf8')).series;
-  const { months, events } = stressCalendar(s);
-  console.log(`\n${id}`);
-  console.log('month  hot days  frost days  heat z>1  heat+dry');
-  for (const m of months) {
-    const c = m.compoundShare === null ? '   n/a' : `${(m.compoundShare * 100).toFixed(0).padStart(5)}%`;
-    console.log(`${String(m.month).padStart(5)}  ${m.hotDays.toFixed(1).padStart(8)}  ${m.frostDays.toFixed(1).padStart(10)}  ${(m.heatShare * 100).toFixed(0).padStart(7)}%  ${c}`);
+  const satPath = new URL(`../public/data/presets/${id}-sat.json`, import.meta.url);
+  let extra: ExtraSignals = {};
+  let note = 'no satellite file';
+  if (existsSync(satPath)) {
+    const sat = validateSat(JSON.parse(readFileSync(satPath, 'utf8')), id);
+    extra = { ...(sat.layers.ndvi ? { ndvi: monthlyNdvi(sat.layers.ndvi.composites) } : {}), ...(sat.layers.wetness ? { wetness: monthlyWetness(sat.layers.wetness) } : {}) };
+    const nd = sat.layers.ndvi?.composites ?? [];
+    note = `NDVI composites ${nd.filter((c) => c.ndvi !== null).length}/${nd.length}, cropland ${((sat.layers.ndvi?.croplandShare ?? 0) * 100).toFixed(1)} %, slope ${sat.layers.slope?.meanSlopeDeg ?? '-'} deg, gaps ${JSON.stringify(sat.gaps)}`;
   }
-  console.log('compound events (newest first):', events.slice(0, 8).map((e) => `${e.year}-${String(e.month).padStart(2, '0')} (T ${e.tmax.toFixed(1)} vs ${e.tmaxNormal.toFixed(1)}, rain ${e.rain.toFixed(0)} vs ${e.rainNormal.toFixed(0)} mm)`).join('; ') || 'none');
+  const r = stressCalendar(s, extra);
+  console.log(`\n${id}: signals ${r.signalsUsed.join('+')} | ${note}`);
+  console.log('month  heat  dry   soil  veg   compound');
+  const p = (v: number | null) => (v === null ? '   -  ' : `${(v * 100).toFixed(0).padStart(4)}% `);
+  for (const m of r.months) console.log(`${M[m.month - 1]}   ${p(m.share.heat)}${p(m.share.dry)}${p(m.share.soil)}${p(m.share.veg)}${p(m.compoundShare)}`);
+  console.log('compound (newest):', r.events.slice(0, 6).map((e) => `${M[e.month - 1]} ${e.year} [${e.abnormal.join(',')}]`).join('; ') || 'none');
+  console.log('UNEXPLAINED vegetation stress:', r.decoupled.filter((d) => d.kind === 'unexplained').map((d) => `${M[d.month - 1]} ${d.year} (NDVI ${d.ndvi?.toFixed(2)} vs ${d.ndviNormal?.toFixed(2)})`).join('; ') || 'none');
+  console.log('GREEN despite drought:', r.decoupled.filter((d) => d.kind === 'buffered').map((d) => `${M[d.month - 1]} ${d.year}`).join('; ') || 'none');
 }

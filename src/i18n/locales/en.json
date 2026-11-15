@@ -108,7 +108,26 @@
     "eventLine": "{{month}} {{year}}: Tmax {{t}} °C (normal {{tn}}), rain {{r}} mm (normal {{rn}})",
     "none": "No heat + dry months in the record.",
     "cellLive": "{{share}}% of days with a living crop",
-    "waiting": "Waiting for climate data…"
+    "waiting": "Waiting for climate data…",
+    "sig": {
+      "soil": "Dry soil (NASA POWER)",
+      "veg": "Weak crops (MODIS NDVI)"
+    },
+    "compound4": "Compound stress",
+    "compoundNote4": "Rows show the share of years in which each month was abnormal (z > 1 against this field’s own {{from}}–{{to}} history). Compound stress = at least 3 of 4 signals abnormal together (heat, dryness, soil moisture, crop greenness); when a signal is undefined, all but one of the others. “–” = signal not meaningful in that month.",
+    "terrain": "Terrain (NASADEM): mean slope {{slope}}°, steepest {{max}}°, elevation {{elev}} m.",
+    "ndviSource": "Crop greenness: MODIS NDVI averaged over cropland only (ESA WorldCover 10 m; {{share}} % of the land within {{km}} km is cropland).",
+    "hidden": "Hidden signals — what no single dataset shows",
+    "hiddenIntro": "Fihrist compares crop greenness from space with the weather and soil water for the same month. When they disagree, the cause is probably not the climate. These are questions for the farmer, not conclusions.",
+    "unexplained": "Crops weaker than the weather explains",
+    "unexplainedHint": "Greenness far below normal (z > 1.5) while heat, rain and soil water were normal. Possible causes outside the climate record: canal water cut, late or failed sowing, pests, land-use change.",
+    "buffered": "Crops green despite a dry month",
+    "bufferedHint": "Rain or soil water far below normal, yet greenness at or above normal — the crops were buffered, most likely by irrigation.",
+    "normal": "normal",
+    "zDry": "dryness z",
+    "zSoil": "soil-dryness z",
+    "noneFound": "None in 2001–2024.",
+    "satPresetsOnly": "Satellite layers (crop greenness, soil moisture, slope) are prefetched for the four presets; for other points only the two weather signals are used (information gap)."
   },
   "charts": {
     "title": "Ten years on this field",

@@ -11,6 +11,8 @@ const HOT = '#F08C74';
 const FROST = '#9CC2F2';
 const COMPOUND = '#E8B391';
 const BARE = '#B98A5C';
+const SOIL = '#C8A27A';
+const VEG = '#6FD6BF';
 
 export const rgba = (hex: string, a: number) => {
   const n = parseInt(hex.slice(1), 16);
@@ -111,8 +113,24 @@ export function Timeline({ analysis }: { analysis: Analysis | null }) {
                 })}
               </div>
             ))}
+            {/* satellite signals (presets): share of years in which the month was abnormal (z > 1) */}
+            {(['soil', 'veg'] as const).filter((sig) => st.signalsUsed.includes(sig)).map((sig) => (
+              <div key={sig} className={GRID} role="row">
+                <span role="rowheader" className="truncate pr-2 text-xs text-parchment">{t(`timeline.sig.${sig}`)}</span>
+                {st.months.map((m) => {
+                  const v = m.share[sig];
+                  return (
+                    <div key={m.month} role="cell" title={`${months[m.month - 1]}: ${v === null ? '–' : `${Math.round(v * 100)}%`}`}
+                      className="num flex h-7 items-center justify-center rounded-sm text-[10.5px] text-parchment"
+                      style={{ background: v ? rgba(sig === 'soil' ? SOIL : VEG, 0.15 + 2.5 * v) : 'rgba(0,0,0,.25)' }}>
+                      {v === null ? '–' : v > 0 ? `${Math.round(v * 100)}%` : ''}
+                    </div>
+                  );
+                })}
+              </div>
+            ))}
             <div className={GRID} role="row">
-              <span role="rowheader" className="truncate pr-2 text-xs text-parchment">{t('timeline.compound')}</span>
+              <span role="rowheader" className="truncate pr-2 text-xs text-parchment">{t(st.signalsUsed.length === 4 ? 'timeline.compound4' : 'timeline.compound')}</span>
               {st.months.map((m) => (
                 <div key={m.month} role="cell"
                   title={`${months[m.month - 1]}: ${m.compoundShare === null ? '–' : `${Math.round(m.compoundShare * 100)}%`}`}
@@ -125,7 +143,15 @@ export function Timeline({ analysis }: { analysis: Analysis | null }) {
           </div>
         </div>
 
-        <p className="text-[11px] leading-relaxed text-slate">{t('timeline.compoundNote', { from, to })}</p>
+        <p className="text-[11px] leading-relaxed text-slate">
+          {st.signalsUsed.length === 4 ? t('timeline.compoundNote4', { from, to }) : t('timeline.compoundNote', { from, to })}
+        </p>
+        {analysis.sat?.layers.slope && (
+          <p className="text-[11px] text-slate">{t('timeline.terrain', { slope: analysis.sat.layers.slope.meanSlopeDeg.toFixed(1), max: analysis.sat.layers.slope.maxSlopeDeg.toFixed(1), elev: analysis.sat.layers.slope.elevationM })}</p>
+        )}
+        {analysis.sat?.layers.ndvi && (
+          <p className="text-[11px] text-slate">{t('timeline.ndviSource', { share: Math.round(analysis.sat.layers.ndvi.croplandShare * 100), km: analysis.sat.layers.ndvi.radiusKm })}</p>
+        )}
         <div>
           <h3 className="eyebrow mb-2">{t('timeline.events')}</h3>
           {st.events.length ? (
@@ -139,6 +165,35 @@ export function Timeline({ analysis }: { analysis: Analysis | null }) {
             </ul>
           ) : <p className="text-xs text-slate">{t('timeline.none')}</p>}
         </div>
+
+        {/* Fihrist decoupling detector: what no single dataset shows */}
+        {st.signalsUsed.includes('veg') && (
+          <div className="rounded-lg border border-brass/40 bg-black/25 p-4">
+            <h3 className="eyebrow mb-1 !text-brass-glow">{t('timeline.hidden')}</h3>
+            <p className="mb-3 text-[11px] leading-snug text-slate">{t('timeline.hiddenIntro')}</p>
+            {(['unexplained', 'buffered'] as const).map((kind) => {
+              const list = st.decoupled.filter((d) => d.kind === kind);
+              return (
+                <div key={kind} className="mb-3 last:mb-0">
+                  <div className="mb-1 text-xs font-medium text-parchment">{t(`timeline.${kind}`)} <span className="num text-slate">({list.length})</span></div>
+                  <p className="mb-1 text-[11px] leading-snug text-slate">{t(`timeline.${kind}Hint`)}</p>
+                  {list.length ? (
+                    <ul className="space-y-0.5 text-xs text-parchment">
+                      {list.slice(0, 4).map((d) => (
+                        <li key={`${d.year}-${d.month}`} className="num">
+                          {months[d.month - 1]} {d.year}: NDVI {d.ndvi?.toFixed(2)} ({t('timeline.normal')} {d.ndviNormal?.toFixed(2)})
+                          {d.z.dry !== undefined ? ` · ${t('timeline.zDry')} ${d.z.dry.toFixed(1)}` : ''}
+                          {d.z.soil !== undefined ? ` · ${t('timeline.zSoil')} ${d.z.soil.toFixed(1)}` : ''}
+                        </li>
+                      ))}
+                    </ul>
+                  ) : <p className="text-[11px] text-slate">{t('timeline.noneFound')}</p>}
+                </div>
+              );
+            })}
+          </div>
+        )}
+        {!st.signalsUsed.includes('veg') && <p className="text-[11px] text-slate">{t('timeline.satPresetsOnly')}</p>}
       </div>
     </section>
   );

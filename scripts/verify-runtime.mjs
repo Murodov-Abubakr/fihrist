@@ -149,11 +149,19 @@ const step5 = await page.evaluate(() => {
     placeholder: /Chart appears after simulation|computed in step 5/.test(document.body.textContent ?? ''),
   };
 });
-// Gissar/wheat baseline: header + 1 + 3 + 2 rotation rows + hot + frost + compound = 10 rows
-if (step5.cropRows !== 10) problems.push(`timeline: expected 10 rows, got ${step5.cropRows}`);
+// Gissar/wheat baseline: header + 1 + 3 + 2 rotation rows + hot + frost + soil + vegetation + compound = 12 rows
+// (the soil and vegetation rows come from the prefetched satellite layers of the preset)
+if (step5.cropRows !== 12) problems.push(`timeline: expected 12 rows, got ${step5.cropRows}`);
 if (step5.cells < 40) problems.push(`timeline: expected labelled cells, got ${step5.cells}`);
 if (step5.lines !== 6) problems.push(`charts: expected 6 lines (2 charts x 3 rotations), got ${step5.lines}`);
 if (step5.placeholder) problems.push('placeholder text still visible');
+// satellite layers (Gissar preset): 4-signal compound index + decoupling panel + terrain line
+const satUi = await page.evaluate(() => {
+  const t = document.body.textContent ?? '';
+  return { hidden: /Hidden signals/.test(t), terrain: /Terrain \(NASADEM\)/.test(t), rows: /Weak crops \(MODIS NDVI\)/.test(t) && /Dry soil \(NASA POWER\)/.test(t) };
+});
+if (!satUi.hidden || !satUi.terrain || !satUi.rows) problems.push(`satellite layers not shown on the Gissar preset: ${JSON.stringify(satUi)}`);
+console.log(`satellite layers: ${JSON.stringify(satUi)}`);
 console.log(`step 5: timeline rows ${step5.cropRows}, labelled cells ${step5.cells}, chart lines ${step5.lines}`);
 
 await click('Scientist');
@@ -222,7 +230,7 @@ if (!m || Math.abs(+m[1]) > 90 || Math.abs(+m[2]) > 180) problems.push(`map clic
 
 // Clicked point → live NASA POWER request through the CSP (connect-src) → parsed + validated
 const t0 = Date.now();
-await waitStatus('Live from NASA', 15000, 'live NASA POWER fetch');
+await waitStatus('Live from NASA', 35000, 'live NASA POWER fetch');
 const liveMs = Date.now() - t0;
 console.log(`live NASA POWER fetch + parse: ${liveMs} ms -> ${await statusText()}`);
 

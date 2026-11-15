@@ -22,6 +22,7 @@ import { useClimate } from './data/useClimate';
 import { ROTATION_IDS, useRotations } from './data/useRotations';
 import { useDerived } from './data/useDerived';
 import { useMonteCarlo } from './data/useMonteCarlo';
+import { useSatellite } from './data/useSatellite';
 
 export default function App() {
   const { t } = useTranslation();
@@ -45,7 +46,8 @@ export default function App() {
   const series = climate.status === 'ready' ? climate.result.series : null;
   // climate-stress sliders applied once (debounced), shared by the replay and the Monte Carlo
   const derived = useDerived(series, state.dT, state.dP);
-  const analysis = useRotations(derived, state.irrigation, state.rotation, state.priorities, state.soil);
+  const sat = useSatellite(state.presetId);
+  const analysis = useRotations(derived, state.irrigation, state.rotation, state.priorities, state.soil, sat);
   const mc = useMonteCarlo(derived, state.irrigation, state.rotation, analysis?.region ?? null, state.soil);
   // Cards are ordered by the farmer's priorities; canonical order until results exist.
   const cards: RotationId[] = analysis?.order ?? ROTATION_IDS;
