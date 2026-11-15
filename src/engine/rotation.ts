@@ -23,7 +23,8 @@ import {
 export type RotationId = 'baseline' | 'waterSaving' | 'regenerative';
 export type Irrigation = 'rainfed' | 'canal' | 'drip';
 export type PlantingCrop = CropId | 'cover';
-const CROP_LIST: PlantingCrop[] = ['wheat', 'cotton', 'chickpea', 'sorghum', 'mung', 'cover'];
+// every crop in the crop table + the cover crop (derived, so a new crop can never be counted as bare soil)
+const CROP_LIST: PlantingCrop[] = [...(Object.keys(CROPS) as CropId[]), 'cover'];
 
 interface Planting {
   crop: PlantingCrop;
@@ -38,18 +39,19 @@ export interface RotationDef {
 }
 
 /* ───────────── Farmer-defined baseline ("my current rotation") ───────────── */
-export type SpringCrop = 'cotton' | 'sorghum' | 'chickpea' | 'mung';
-export type AutumnCrop = 'wheat' | 'cover';
+export type SpringCrop = 'cotton' | 'sorghum' | 'chickpea' | 'mung' | 'maize' | 'potato';
+export type AutumnCrop = 'wheat' | 'barley' | 'cover';
 export interface CustomYear { spring: SpringCrop | null; autumn: AutumnCrop | null }
 export interface CustomRotation { kind: 'custom'; years: CustomYear[] }
 export type BaselineSpec = 'wheat' | 'wheatCotton' | CustomRotation;
-export const SPRING_CROPS: SpringCrop[] = ['cotton', 'sorghum', 'chickpea', 'mung'];
-export const AUTUMN_CROPS: AutumnCrop[] = ['wheat', 'cover'];
+export const SPRING_CROPS: SpringCrop[] = ['cotton', 'maize', 'sorghum', 'potato', 'chickpea', 'mung'];
+export const AUTUMN_CROPS: AutumnCrop[] = ['wheat', 'barley', 'cover'];
 export const CUSTOM_MAX_YEARS = 3;
 /** Sowing dates (Central Asian presets — TODO verify locally), the same ones the suggested rotations use. */
 export const SOW_DATE: Record<SpringCrop | AutumnCrop | 'wheatAfterCotton', [number, number]> = {
   chickpea: [3, 15], cotton: [4, 10], sorghum: [4, 20], mung: [6, 20], // mung: summer catch crop after wheat harvest
-  wheat: [10, 15], wheatAfterCotton: [11, 1], cover: [10, 5],
+  maize: [4, 20], potato: [3, 1], // from CROPS (maize: GIEWS spring planting from mid-April; potato: FAO Crop Calendar TJ)
+  wheat: [10, 15], wheatAfterCotton: [11, 1], cover: [10, 5], barley: [10, 15],
 };
 
 /** Validates untrusted input (UI state) into a CustomRotation, or returns null. */
@@ -349,7 +351,7 @@ export function simulateRotation(s: DailySeries, dd: DailyDerived, def: Rotation
       revenue += e.revenueUsd;
       netIrr += x.netIrrigation;
       unmet += irrigated ? 0 : 10 * (x.etc - x.eta);
-      if (x.crop === 'wheat' || x.crop === 'sorghum') forage++;
+      if (x.crop === 'wheat' || x.crop === 'sorghum' || x.crop === 'maize' || x.crop === 'barley') forage++; // straw / stover
     }
     // land cover in this calendar year
     let bare = 0, bareRain = 0, living = 0;

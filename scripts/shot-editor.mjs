@@ -31,6 +31,10 @@ await pick(2, 'mung');
 await new Promise((r) => setTimeout(r, 2500));
 console.log('mung after wheat ->', await msg());
 console.log('baseline card chain ->', await chain());
+// new crops: year 1 potato + barley, year 2 mung → valid
+await pick(0, 'potato'); await pick(1, 'barley');
+await new Promise((r) => setTimeout(r, 2500));
+console.log('potato + barley, then mung ->', await msg(), '| chain:', await chain());
 const aside = await page.$('aside');
 await aside.screenshot({ path: `${out}/editor.png` });
 console.log('errors:', errors.length ? errors : 'none');

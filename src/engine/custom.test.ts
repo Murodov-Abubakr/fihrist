@@ -55,6 +55,24 @@ describe("farmer-defined baseline ('my own rotation')", () => {
     const defs = rotationDefs(c([{ spring: null, autumn: 'wheat' }, { spring: 'chickpea', autumn: null }]));
     expect(defs.baseline.plantings).toEqual(rotationDefs('wheat').baseline.plantings);
   });
+  it('maize, potato and barley run through the full engine with plausible food numbers', () => {
+    // (year-3 wheat would clash with next cycle's March potato — the overlap check covers the cycle boundary)
+    expect(customDef(c([{ spring: 'potato', autumn: 'barley' }, { spring: 'mung', autumn: null }, { spring: 'maize', autumn: 'wheat' }])))
+      .toMatchObject({ kind: 'overlap', first: 'wheat', firstYear: 3, second: 'potato', secondYear: 1 });
+    const custom = c([{ spring: 'potato', autumn: 'barley' }, { spring: 'mung', autumn: null }, { spring: 'maize', autumn: null }]);
+    const def = customDef(custom);
+    if (!('plantings' in def)) throw new Error(`expected a valid rotation, got ${JSON.stringify(def)}`);
+    const r = simulateRotation(gissar, dd, def, { irrigation: 'canal', region: 'centralAsia' });
+    const potato = r.seasons.find((s) => s.crop === 'potato');
+    expect(potato?.yieldT).toBeCloseTo(19.96, 6); // irrigated → full reference yield
+    // 19.96 t/ha fresh × 770 kcal/kg ÷ (2,200 × 365) ≈ 19 people per hectare in a potato year
+    expect((potato!.yieldT * 1000 * 770) / (2200 * 365)).toBeCloseTo(19.1, 0);
+    expect(r.mean.peopleFed).toBeGreaterThan(0);
+    expect(r.calendar.flat().some((m) => m.crops.some((x) => x.crop === 'barley'))).toBe(true);
+  });
+  it('potato in March cannot follow winter wheat (still in the field until June)', () => {
+    expect(customDef(c([{ spring: null, autumn: 'wheat' }, { spring: 'potato', autumn: null }]))).toMatchObject({ kind: 'overlap', first: 'wheat', second: 'potato' });
+  });
   it('the Monte Carlo runs with a 3-year farmer cycle', () => {
     const custom = c([{ spring: 'sorghum', autumn: 'wheat' }, { spring: 'mung', autumn: 'cover' }, { spring: 'cotton', autumn: null }]);
     expect('plantings' in customDef(custom)).toBe(true);

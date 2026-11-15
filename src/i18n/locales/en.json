@@ -157,7 +157,10 @@
     "sorghum": "Sorghum",
     "mung": "Mung bean",
     "cover": "Cereal + cover",
-    "coverOnly": "Winter cover crop"
+    "coverOnly": "Winter cover crop",
+    "maize": "Maize",
+    "barley": "Winter barley",
+    "potato": "Potato"
   },
   "data": {
     "loading": "Reading NASA POWER data…",
@@ -253,7 +256,10 @@
     "chickpea": "Chickpea",
     "sorghum": "Sorghum",
     "mung": "Mung",
-    "cover": "Cover"
+    "cover": "Cover",
+    "maize": "Maize",
+    "barley": "Barley",
+    "potato": "Potato"
   },
   "globe": {
     "title": "Find your field on Earth",
@@ -309,6 +315,6 @@
     "applied": "Your rotation is used as the baseline.",
     "empty": "Add at least one harvested crop.",
     "overlap": "{{a}} (year {{ya}}) is still in the field when {{b}} (year {{yb}}) would be sown. Change one of them.",
-    "dates": "Sowing dates used: chickpea 15 Mar, cotton 10 Apr, sorghum 20 Apr, mung bean 20 Jun (after wheat), cover crop 5 Oct, wheat 15 Oct (1 Nov after cotton). The cycle repeats."
+    "dates": "Sowing dates used: potato 1 Mar, chickpea 15 Mar, cotton 10 Apr, sorghum and maize 20 Apr, mung bean 20 Jun (after wheat), cover crop 5 Oct, wheat and barley 15 Oct (wheat 1 Nov after cotton). The cycle repeats."
   }
 }

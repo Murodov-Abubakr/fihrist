@@ -43,6 +43,15 @@ Verified against the FAO-56 web edition, Tables 11 and 12 (https://www.fao.org/4
 | Sorghum (grain) | 0.3 / 1.05 / 0.55 | 20/35/45/30 | 1.5 m | 10 °C | T12 (Cereals group Kc ini; mid = midpoint of 1.00–1.10); T11 Arid Region row. **TODO verify** Tbase source |
 | Mung bean (= green gram) | 0.4 / 1.05 / 0.35 | 20/30/30/20 | 0.4 m | 10 °C | T12 "Green Gram and Cowpeas" (dry harvest); T11 row prints total 110 d but stages sum to 100 d. **TODO verify** Tbase source |
 
+### Crops added 2026-11-15 (for "My own rotation")
+| Crop | Kc ini / mid / end | Stages (d) | Zr / p | Ky | Ym Central Asia | Food (USDA FDC) | Price | Sowing |
+|---|---|---|---|---|---|---|---|---|
+| Maize (grain) | 0.3 (Cereals group) / 1.20 / 0.35 (dry harvest), h 2 m — FAO-56 T12 | 30/40/50/30 — T11 Spain/Calif. April row (**proxy region**) | 1.35 m (1.0–1.7) / 0.55 — T22 | 1.25 — FAO WR 22 T1 | 1.93 t/ha Afghanistan 2024, FAOSTAT via OWID — **TODO**: Tajik official 10–19 t/ha judged implausible, not used | 365 kcal, 9.42 g protein — FDC 170288 | 190.6 USD/t, World Bank 2024 (proxy) | 20 Apr (GIEWS: spring planting from mid-April; **TODO verify**) |
+| Winter barley | 0.3 (Cereals group) / 1.15 / 0.25, h 1 m — T12 | 40/60/60/40 — T11 Barley/Oats/Wheat "Nov" 200-d row, no region (**proxy**) | 1.25 m (1.0–1.5) / 0.55 — T22 | 1.0 — **proxy** (winter wheat; FAO-33 has no barley) | 2.36 t/ha Tajikistan 2024, FAOSTAT via OWID (proxy: national average) | 354 kcal, 12.5 g — FDC 170283 (read via mirror) | maize price as proxy (World Bank barley series ends 2020) | 15 Oct (GIEWS: winter cereals planted by November; **TODO verify**) |
+| Potato | 0.5 (Roots & Tubers group) / 1.15 / 0.75, h 0.6 m — T12 | 25/30/35/30 = 120 — T11 "(Semi) Arid", mid 35 within 30–45 to match the FAO Crop Calendar (TJ lowlands 115–120 d) | 0.5 m (0.4–0.6) / 0.35 — T22 | 1.10 — FAO WR 22 T1 | 19.96 t/ha fresh, Tajikistan 2024, FAOSTAT via OWID | 77 kcal, 2.05 g per 100 g fresh — FDC 170026 | 120 USD/t, secondary (Selina Wamucii, Jan 2023, attributed to FAOSTAT) — **TODO** | 1 Mar (FAO Crop Calendar TJ: 15 Feb–15 Mar) |
+
+Tbase: maize 10 °C (UNL CropWatch, Purdue MRCC), barley 0 °C (Bauer et al. 1992 via Montana Climate Office), potato 7 °C (Manitoba Agriculture). Kansas reference yields: maize 129 bu/ac all practices (NASS 2024, proxy), barley and potato US national FAOSTAT values (proxy).
+
 ## Rotation model parameters (`src/engine/params.ts`, researched 2026-11-14)
 Quality: **sourced** = from the cited source for this crop/region · **proxy** = sourced but for a related crop/region · **TODO** = assumption awaiting a source. Every non-sourced item is listed automatically in each card's "Information gaps".
 

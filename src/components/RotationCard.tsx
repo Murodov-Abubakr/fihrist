@@ -13,14 +13,14 @@ import { MC_LIMITS, type Band, type McSummary } from '../engine/montecarlo';
 import { ROTATION_COLOR } from '../lib/palette';
 
 export type { RotationId };
-type Crop = 'wheat' | 'cotton' | 'chickpea' | 'sorghum' | 'mung' | 'cover';
+type Crop = 'wheat' | 'cotton' | 'chickpea' | 'sorghum' | 'mung' | 'maize' | 'barley' | 'potato' | 'cover';
 
 /** Ring accent per rotation (outer ring of each crop node). */
 const ACCENT = ROTATION_COLOR;
 const FALLBACK_SEQ: Record<RotationId, Crop[]> = { baseline: ['wheat', 'wheat', 'wheat'], waterSaving: ['wheat', 'chickpea', 'sorghum'], regenerative: ['wheat', 'mung', 'cover'] };
 const SECTIONS = ['why', 'evidence', 'benefits', 'gaps', 'risks'] as const;
 const SECTION_ICON: Record<(typeof SECTIONS)[number], IconName> = { why: 'spark', evidence: 'satellite', benefits: 'trend', gaps: 'gap', risks: 'alert' };
-const SUMMER: Crop[] = ['sorghum', 'mung', 'cotton'];
+const SUMMER: Crop[] = ['sorghum', 'mung', 'cotton', 'maize', 'potato'];
 const LEGUMES: Crop[] = ['chickpea', 'mung'];
 const PRIORITIES: PriorityKey[] = ['water', 'nitrogen', 'erosion', 'organic', 'forage', 'income'];
 

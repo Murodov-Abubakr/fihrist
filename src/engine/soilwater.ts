@@ -51,6 +51,9 @@ export const ROOT: Record<CropId, { zr: Param; p: Param }> = {
   chickpea: { zr: { value: 0.8, unit: 'm', source: `${T22}: Chick pea 0.6–1.0`, quality: 'sourced' }, p: { value: 0.5, unit: '-', source: `${T22}: Chick pea`, quality: 'sourced' } },
   sorghum: { zr: { value: 1.5, unit: 'm', source: `${T22}: Sorghum, grain 1.0–2.0`, quality: 'sourced' }, p: { value: 0.55, unit: '-', source: `${T22}: Sorghum, grain`, quality: 'sourced' } },
   mung: { zr: { value: 0.8, unit: 'm', source: `${T22}: Green Gram and Cowpeas 0.6–1.0`, quality: 'sourced' }, p: { value: 0.45, unit: '-', source: `${T22}: Green Gram and Cowpeas`, quality: 'sourced' } },
+  maize: { zr: { value: 1.35, unit: 'm', source: `${T22}: Maize, Field (grain) 1.0–1.7`, quality: 'sourced' }, p: { value: 0.55, unit: '-', source: `${T22}: Maize, Field (grain)`, quality: 'sourced' } },
+  barley: { zr: { value: 1.25, unit: 'm', source: `${T22}: Barley 1.0–1.5`, quality: 'sourced' }, p: { value: 0.55, unit: '-', source: `${T22}: Barley`, quality: 'sourced' } },
+  potato: { zr: { value: 0.5, unit: 'm', source: `${T22}: Potato 0.4–0.6`, quality: 'sourced' }, p: { value: 0.35, unit: '-', source: `${T22}: Potato`, quality: 'sourced' } },
 };
 
 /** Bare-soil evaporation constants (FAO-56 ch. 7). */

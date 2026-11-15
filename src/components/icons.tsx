@@ -23,6 +23,15 @@ export const Icons = {
   cotton: ({ size, ...p }: P) => (
     <svg {...base(size)} {...p}><circle cx="9" cy="10" r="3.2" /><circle cx="15" cy="10" r="3.2" /><circle cx="12" cy="6.5" r="3.2" /><path d="M7 14l5 2 5-2" /><path d="M12 16v6" /></svg>
   ),
+  maize: ({ size, ...p }: P) => (
+    <svg {...base(size)} {...p}><path d="M12 22v-5" /><path d="M12 17c-2 0-3.2-2.5-3.2-6.5S10 3 12 3s3.2 3.5 3.2 7.5S14 17 12 17Z" /><path d="M10.3 7h3.4M9.4 10h5.2M9.6 13h4.8" /><path d="M12 17c-2.5 1-4.5.5-6-1.5 2-.5 4 0 6 1.5ZM12 17c2.5 1 4.5.5 6-1.5-2-.5-4 0-6 1.5Z" /></svg>
+  ),
+  barley: ({ size, ...p }: P) => (
+    <svg {...base(size)} {...p}><path d="M12 22V9" /><path d="M12 9l-2-2M12 12l-2.5-2M12 15l-2.5-2M12 9l2-2M12 12l2.5-2M12 15l2.5-2" /><path d="M10 7L8 2.5M14 7l2-4.5M9.5 10L6.5 6M14.5 10l3-4" /></svg>
+  ),
+  potato: ({ size, ...p }: P) => (
+    <svg {...base(size)} {...p}><path d="M5 13.5C5 9 8.5 6 13 6c3.5 0 6 2.3 6 5.5C19 16 15.5 19 11 19c-3.5 0-6-2-6-5.5Z" /><circle cx="10" cy="11" r=".6" /><circle cx="14.5" cy="10" r=".6" /><circle cx="13" cy="14.5" r=".6" /><circle cx="9" cy="15" r=".6" /></svg>
+  ),
   cover: ({ size, ...p }: P) => (
     <svg {...base(size)} {...p}><path d="M3 18h18" /><path d="M5 18c0-3 1.5-5 4-6M10 18c0-3 1.5-5 4-6M15 18c0-3 1.5-5 4-6" /><path d="M7 4l1 1.5M12 3v2M17 4l-1 1.5" /></svg>
   ),

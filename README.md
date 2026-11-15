@@ -53,7 +53,7 @@ Each rotation card explains **why it is suggested, the NASA evidence, expected b
 | Stress calendar | hot and frost days; heat + dry months as z-scores against the field's own 2001–2024 history | — |
 | Uncertainty | 2,400 twelve-year futures, year bootstrap of real NASA POWER years, common random numbers across rotations | — |
 
-The engine is plain TypeScript, runs in the browser, and is unit-tested (165 tests), including FAO-56 worked examples (e.g. Example 18, ET0 = 3.9 mm/day) and a closed soil-water balance.
+The engine is plain TypeScript, runs in the browser, and is unit-tested (181 tests), including FAO-56 worked examples (e.g. Example 18, ET0 = 3.9 mm/day) and a closed soil-water balance.
 
 ## Validation (Kansas)
 
