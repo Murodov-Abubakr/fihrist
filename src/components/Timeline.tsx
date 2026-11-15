@@ -1,5 +1,6 @@
 import { useTranslation } from 'react-i18next';
 import type { Analysis } from '../data/useRotations';
+import type { SatelliteState } from '../data/useSatellite';
 import { ROTATION_IDS } from '../data/useRotations';
 import { HOT_DAY_C } from '../engine/stress';
 import type { MonthCover } from '../engine/rotation';
@@ -22,7 +23,7 @@ export const rgba = (hex: string, a: number) => {
 const GRID = 'grid grid-cols-[minmax(10rem,12rem)_repeat(12,minmax(0,1fr))] items-center gap-1';
 
 /** 12-month field calendar per rotation (living crop vs bare soil) plus hot, frost and heat + dry months. */
-export function Timeline({ analysis }: { analysis: Analysis | null }) {
+export function Timeline({ analysis, sat }: { analysis: Analysis | null; sat?: SatelliteState }) {
   const { t } = useTranslation();
   const months = t('months', { returnObjects: true }) as string[];
 
@@ -193,7 +194,21 @@ export function Timeline({ analysis }: { analysis: Analysis | null }) {
             })}
           </div>
         )}
-        {!st.signalsUsed.includes('veg') && <p className="text-[11px] text-slate">{t('timeline.satPresetsOnly')}</p>}
+        {sat?.remote && sat.status === 'ready' && analysis.sat && (
+          <p className="text-[11px] text-slate">{t('timeline.cloudDone', { n: analysis.sat.layers.ndvi?.composites.filter((c) => c.ndvi !== null).length ?? 0 })}</p>
+        )}
+        {!st.signalsUsed.includes('veg') && (
+          sat?.run ? (
+            <div className="flex flex-wrap items-center gap-3 rounded-lg border border-white/10 bg-black/20 p-3" aria-live="polite">
+              <button type="button" className="chip" disabled={sat.status === 'loading'} onClick={sat.run}>
+                {sat.status === 'loading' ? t('timeline.cloudRunning') : t('timeline.cloudRun')}
+              </button>
+              <p className="min-w-0 flex-1 text-[11px] leading-snug text-slate">
+                {sat.status === 'error' ? t('timeline.cloudError') : sat.status === 'busy' ? t('timeline.cloudBusy') : t('timeline.cloudHint')}
+              </p>
+            </div>
+          ) : <p className="text-[11px] text-slate">{t('timeline.satPresetsOnly')}</p>
+        )}
       </div>
     </section>
   );

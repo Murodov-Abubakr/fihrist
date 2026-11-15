@@ -46,7 +46,7 @@ export default function App() {
   const series = climate.status === 'ready' ? climate.result.series : null;
   // climate-stress sliders applied once (debounced), shared by the replay and the Monte Carlo
   const derived = useDerived(series, state.dT, state.dP);
-  const sat = useSatellite(state.presetId);
+  const sat = useSatellite(state.presetId, series?.lat ?? null, series?.lon ?? null);
   const analysis = useRotations(derived, state.irrigation, state.rotation, state.priorities, state.soil, sat);
   const mc = useMonteCarlo(derived, state.irrigation, state.rotation, analysis?.region ?? null, state.soil);
   // Cards are ordered by the farmer's priorities; canonical order until results exist.
@@ -82,7 +82,7 @@ export default function App() {
             ))}
           </div>
           {state.mode === 'scientist' && <div className="relative"><ComputeGridPanel mc={mc} /></div>}
-          <div className="relative"><Timeline analysis={analysis} /></div>
+          <div className="relative"><Timeline analysis={analysis} sat={sat} /></div>
           <div className="relative"><Charts analysis={analysis} mc={mc.status === 'done' ? mc.summary : null} /></div>
         </div>
       </main>

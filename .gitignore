@@ -25,3 +25,6 @@ cache/
 # Build plan files (local only)
 CLAUDE.md
 PROMPT.md
+
+# Azure function build artefact
+azure/sat-function/*.zip

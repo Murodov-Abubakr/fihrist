@@ -80,15 +80,15 @@ Weather, soil water and satellite greenness usually sit in separate tools. Fihri
 
 These are flagged as **questions for the farmer**, not conclusions. Thresholds are project choices, listed in SOURCES.md.
 
-**A first result (a hypothesis, not proof).** Both Gissar (Tajikistan) and Balkh (Afghanistan), about 250 km apart, show unexplained vegetation stress in **March–April 2012**. Weather, rain and soil water look normal for those months, yet crops were far less green: Gissar NDVI 0.26 vs a normal of 0.42 in March. The weather record holds a candidate cause that the index does not yet use: the 2011–12 winter was unusually cold at both sites.
+**A first result (a hypothesis, not proof).** All three Central Asian presets show unexplained vegetation stress in **March–April 2012**: Gissar and Khatlon in Tajikistan, and Balkh in Afghanistan, up to about 250 km apart. Kansas does not. Weather, rain and soil water look normal for those months, yet crops were far less green: in March, NDVI was 0.26 vs a normal of 0.42 in Gissar, 0.19 vs 0.28 in Khatlon, and 0.17 vs 0.28 in Balkh. The weather record holds a candidate cause that the index does not yet use: the 2011–12 winter was unusually cold at all three sites.
 
-| Winter 2011–12 | Gissar | Balkh |
-|---|---|---|
-| Frost days, February (normal) | 27 (19.1) | 21 (9.6) |
-| Frost days, March (normal) | 19 (7.5) | 8 (2.5) |
-| Days ≤ −10 °C, February (normal) | 8 (1.6) | 0 (0.2) |
+| Winter 2011–12 | Gissar | Khatlon | Balkh |
+|---|---|---|---|
+| Frost days, February (normal) | 27 (19.1) | 24 (10.9) | 21 (9.6) |
+| Frost days, March (normal) | 19 (7.5) | 11 (3.0) | 8 (2.5) |
+| Days ≤ −10 °C, February (normal) | 8 (1.6) | 2 (0.3) | 0 (0.2) |
 
-Winter-kill or delayed green-up after a hard winter would fit this pattern. It needs confirmation from field reports before it is treated as a finding. A fifth signal, winter cold, is the obvious next step. NASA POWER is a ~50 km grid, and this local frost record has not been cross-checked against station data.
+Winter-kill or delayed green-up after a hard winter would fit this pattern. The three sites share one regional winter, so they are not independent tests. The pattern needs confirmation from field reports before it is treated as a finding. A fifth signal, winter cold, is the obvious next step. NASA POWER is a ~50 km grid, and this local frost record has not been cross-checked against station data.
 
 ## Honest findings
 
