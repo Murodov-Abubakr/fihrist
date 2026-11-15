@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { buildSeasonTables, type McSummary } from '../engine/montecarlo.ts';
 import type { RegionId } from '../engine/params.ts';
-import type { Irrigation } from '../engine/rotation.ts';
+import type { BaselineSpec, Irrigation } from '../engine/rotation.ts';
 import type { Soil } from '../engine/soilwater.ts';
 import { runComputeGrid, type NodeReport } from './computeGrid.ts';
 import type { Derived } from './useDerived.ts';
@@ -16,7 +16,7 @@ export const MC_RUNS = 2400;
 export const MC_BATCHES = 12;
 
 /** Builds season tables (main thread) then runs the Compute Grid; restarts when inputs change. */
-export function useMonteCarlo(derived: Derived | null, irrigation: Irrigation, baseline: 'wheat' | 'wheatCotton', region: RegionId | null, soil: Soil): McState {
+export function useMonteCarlo(derived: Derived | null, irrigation: Irrigation, baseline: BaselineSpec, region: RegionId | null, soil: Soil): McState {
   const [state, setState] = useState<McState>({ status: 'idle' });
 
   const tables = useMemo(() => {

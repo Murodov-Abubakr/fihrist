@@ -5,7 +5,7 @@ import { regionOf, type RegionId } from '../engine/params.ts';
 import { stressCalendar } from '../engine/stress.ts';
 import type { Soil } from '../engine/soilwater.ts';
 import { rankRotations, type PriorityKey, type RankedRotation } from '../engine/ranking.ts';
-import { rotationDefs, simulateRotation, type Irrigation, type RotationId, type RotationResult } from '../engine/rotation.ts';
+import { rotationDefs, simulateRotation, type BaselineSpec, type Irrigation, type RotationId, type RotationResult } from '../engine/rotation.ts';
 
 export const ROTATION_IDS: RotationId[] = ['baseline', 'waterSaving', 'regenerative'];
 
@@ -31,7 +31,7 @@ export interface Analysis {
 }
 
 /** Heavy part (depends only on weather + field settings). Ranking is recomputed separately on slider moves. */
-function useSimulation(derived: Derived | null, irrigation: Irrigation, baseline: 'wheat' | 'wheatCotton', soil: Soil) {
+function useSimulation(derived: Derived | null, irrigation: Irrigation, baseline: BaselineSpec, soil: Soil) {
   return useMemo(() => {
     if (!derived) return null;
     const series = derived.series;
@@ -53,7 +53,7 @@ function useSimulation(derived: Derived | null, irrigation: Irrigation, baseline
   }, [derived, irrigation, baseline, soil]);
 }
 
-export function useRotations(derived: Derived | null, irrigation: Irrigation, baseline: 'wheat' | 'wheatCotton', priorities: Record<PriorityKey, number>, soil: Soil): Analysis | null {
+export function useRotations(derived: Derived | null, irrigation: Irrigation, baseline: BaselineSpec, priorities: Record<PriorityKey, number>, soil: Soil): Analysis | null {
   const sim = useSimulation(derived, irrigation, baseline, soil);
   return useMemo(() => {
     if (!sim) return null;

@@ -25,9 +25,31 @@ const LEGUMES: Crop[] = ['chickpea', 'mung'];
 const PRIORITIES: PriorityKey[] = ['water', 'nitrogen', 'erosion', 'organic', 'forage', 'income'];
 
 /** Rotation as an unlocked skill-tree path: white glowing nodes joined by a glowing line. */
-function CropChain({ crops, accent, big }: { crops: Crop[]; accent: string; big: boolean }) {
+function CropChain({ crops, years, accent, big }: { crops: Crop[]; years?: Crop[][]; accent: string; big: boolean }) {
   const { t } = useTranslation();
   const node = big ? 54 : 46;
+  // farmer-defined cycle: one node per year (cycle repeated to fill three), all crops of that year named
+  if (years?.length) {
+    const nodes = Array.from({ length: 3 }, (_, i) => years[i % years.length]);
+    return (
+      <ol className="relative flex items-start justify-between">
+        <span aria-hidden className="absolute left-[16%] right-[16%] h-[2px] rounded-full"
+          style={{ top: node / 2 - 1, background: '#F2EFEA', boxShadow: '0 0 6px rgba(255,255,255,.8), 0 0 16px rgba(255,255,255,.35)' }} />
+        {nodes.map((cs, i) => (
+          <li key={i} className="relative z-10 flex w-1/3 flex-col items-center text-center">
+            <span className="flex items-center justify-center rounded-full"
+              style={{ width: node, height: node, background: '#F2EFEA', color: '#17191C', boxShadow: `0 0 0 3px #1E2126, 0 0 0 4.5px ${accent}, 0 0 14px rgba(255,255,255,.55), 0 0 30px -4px ${accent}` }}>
+              <Icon name={cs[0] ?? 'gap'} size={big ? 28 : 24} strokeWidth={1.7} />
+            </span>
+            <span className="mt-3 font-display text-[10px] font-medium uppercase tracking-[0.22em] text-slate">{t('card.year', { n: i + 1 })}</span>
+            <span className="mt-0.5 text-xs font-medium leading-tight text-parchment">
+              {cs.length ? cs.map((c) => t(`crops.${c === 'cover' ? 'coverOnly' : c}`)).join(' + ') : t('editor.fallow')}
+            </span>
+          </li>
+        ))}
+      </ol>
+    );
+  }
   return (
     <ol className="relative flex items-start justify-between">
       <span aria-hidden className="absolute left-[16%] right-[16%] h-[2px] rounded-full"
@@ -214,7 +236,7 @@ export function RotationCard({ id, index, total, analysis, mc }: { id: RotationI
 
         <div className="relative overflow-hidden px-4 pb-5 pt-14" style={{ borderTopLeftRadius: 6, borderTopRightRadius: 6 }}>
           <OrbitDecor variant={index} />
-          <div className="relative"><CropChain crops={seq} accent={ACCENT[id]} big={!sci} /></div>
+          <div className="relative"><CropChain crops={seq} years={r?.def.displayYears as Crop[][] | undefined} accent={ACCENT[id]} big={!sci} /></div>
         </div>
 
         <div className="node-rule mx-5" />

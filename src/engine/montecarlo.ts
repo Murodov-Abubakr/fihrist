@@ -21,7 +21,7 @@ import { seasonLength } from './kc.ts';
 import { IRRIGATION_EFFICIENCY, UREA_N_SHARE, UREA_USD_T, KCAL_PER_PERSON_DAY, type RegionId } from './params.ts';
 import {
   paramsOf, rotationDefs, seasonEconomics, seasonWater, simulateRotation,
-  type Irrigation, type RotationDef, type RotationId,
+  type BaselineSpec, type Irrigation, type RotationDef, type RotationId,
 } from './rotation.ts';
 import type { Soil } from './soilwater.ts';
 
@@ -56,7 +56,7 @@ export interface McPayload {
 }
 
 /** Builds the season tables for the three rotations (heavy part; runs in the browser). */
-export function buildSeasonTables(s: DailySeries, dd: DailyDerived, opt: { irrigation: Irrigation; region: RegionId; baseline: 'wheat' | 'wheatCotton'; soil?: Soil }): McPayload {
+export function buildSeasonTables(s: DailySeries, dd: DailyDerived, opt: { irrigation: Irrigation; region: RegionId; baseline: BaselineSpec; soil?: Soil }): McPayload {
   const defs = rotationDefs(opt.baseline);
   const irrigated = opt.irrigation !== 'rainfed';
   const soil = opt.soil ?? 'loam';

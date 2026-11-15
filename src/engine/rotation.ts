@@ -31,7 +31,84 @@ interface Planting {
   yearOffset: number; // within the cycle
   lengthDays?: number; // for the winter cover (terminated, not harvested)
 }
-export interface RotationDef { id: RotationId; cycleYears: number; plantings: Planting[]; display: PlantingCrop[] }
+export interface RotationDef {
+  id: RotationId; cycleYears: number; plantings: Planting[]; display: PlantingCrop[];
+  /** farmer-defined baseline: crops sown in each year of the cycle (in sowing order) */
+  displayYears?: PlantingCrop[][];
+}
+
+/* ───────────── Farmer-defined baseline ("my current rotation") ───────────── */
+export type SpringCrop = 'cotton' | 'sorghum' | 'chickpea' | 'mung';
+export type AutumnCrop = 'wheat' | 'cover';
+export interface CustomYear { spring: SpringCrop | null; autumn: AutumnCrop | null }
+export interface CustomRotation { kind: 'custom'; years: CustomYear[] }
+export type BaselineSpec = 'wheat' | 'wheatCotton' | CustomRotation;
+export const SPRING_CROPS: SpringCrop[] = ['cotton', 'sorghum', 'chickpea', 'mung'];
+export const AUTUMN_CROPS: AutumnCrop[] = ['wheat', 'cover'];
+export const CUSTOM_MAX_YEARS = 3;
+/** Sowing dates (Central Asian presets — TODO verify locally), the same ones the suggested rotations use. */
+export const SOW_DATE: Record<SpringCrop | AutumnCrop | 'wheatAfterCotton', [number, number]> = {
+  chickpea: [3, 15], cotton: [4, 10], sorghum: [4, 20], mung: [6, 20], // mung: summer catch crop after wheat harvest
+  wheat: [10, 15], wheatAfterCotton: [11, 1], cover: [10, 5],
+};
+
+/** Validates untrusted input (UI state) into a CustomRotation, or returns null. */
+export function parseCustom(x: unknown): CustomRotation | null {
+  if (!x || typeof x !== 'object' || (x as { kind?: unknown }).kind !== 'custom') return null;
+  const years = (x as { years?: unknown }).years;
+  if (!Array.isArray(years) || years.length < 1 || years.length > CUSTOM_MAX_YEARS) return null;
+  const out: CustomYear[] = [];
+  for (const y of years) {
+    if (!y || typeof y !== 'object') return null;
+    const s = (y as { spring?: unknown }).spring ?? null;
+    const a = (y as { autumn?: unknown }).autumn ?? null;
+    if (s !== null && !SPRING_CROPS.includes(s as SpringCrop)) return null;
+    if (a !== null && !AUTUMN_CROPS.includes(a as AutumnCrop)) return null;
+    out.push({ spring: s as SpringCrop | null, autumn: a as AutumnCrop | null });
+  }
+  return { kind: 'custom', years: out };
+}
+
+export type CustomProblem =
+  | { kind: 'empty' }
+  | { kind: 'overlap'; first: PlantingCrop; firstYear: number; second: PlantingCrop; secondYear: number };
+
+/** Builds the baseline RotationDef from the farmer's cycle, or explains why the calendar is impossible. */
+export function customDef(c: CustomRotation): RotationDef | CustomProblem {
+  const plantings: Planting[] = [];
+  c.years.forEach((y, i) => {
+    if (y.spring) plantings.push({ crop: y.spring, plant: SOW_DATE[y.spring], yearOffset: i });
+    if (y.autumn) {
+      const date = y.autumn === 'wheat' && y.spring === 'cotton' ? SOW_DATE.wheatAfterCotton : SOW_DATE[y.autumn];
+      plantings.push({ crop: y.autumn, plant: date, yearOffset: i, ...(y.autumn === 'cover' ? { lengthDays: COVER_DAYS } : {}) });
+    }
+  });
+  if (!plantings.some((p) => p.crop !== 'cover')) return { kind: 'empty' };
+  const def: RotationDef = {
+    id: 'baseline', cycleYears: c.years.length, plantings,
+    display: c.years.map((y) => (y.spring ?? y.autumn ?? 'cover')),
+    displayYears: c.years.map((y) => [y.spring, y.autumn].filter((x): x is SpringCrop | AutumnCrop => x !== null)),
+  };
+  const clash = findOverlap(def);
+  return clash ?? def;
+}
+
+/** First pair of plantings that would occupy the field on the same day (checked over three cycles). */
+export function findOverlap(def: RotationDef): CustomProblem | null {
+  const days = new Map<number, { crop: PlantingCrop; year: number }>();
+  for (let cyc = 0; cyc < 3; cyc++) {
+    for (const p of def.plantings) {
+      const start = Date.UTC(2001 + cyc * def.cycleYears + p.yearOffset, p.plant[0] - 1, p.plant[1]) / 864e5;
+      const len = p.lengthDays ?? seasonLength(paramsOf(p.crop));
+      for (let d = 0; d < len; d++) {
+        const prev = days.get(start + d);
+        if (prev) return { kind: 'overlap', first: prev.crop, firstYear: prev.year + 1, second: p.crop, secondYear: p.yearOffset + 1 };
+        days.set(start + d, { crop: p.crop, year: p.yearOffset });
+      }
+    }
+  }
+  return null;
+}
 
 /** Winter cover: modelled with the winter-wheat Kc curve, terminated after 170 days (15 Oct → ~2 Apr). TODO verify species/termination. */
 const COVER_DAYS = 170;
@@ -40,16 +117,28 @@ const COVER_DAYS = 170;
  * Rotation calendars (Central Asian sowing dates — TODO verify with local agronomists).
  * Cycles are arranged so plantings never overlap.
  */
-export function rotationDefs(baseline: 'wheat' | 'wheatCotton'): Record<RotationId, RotationDef> {
+export function rotationDefs(baseline: BaselineSpec): Record<RotationId, RotationDef> {
+  const custom = typeof baseline === 'object' ? customDef(baseline) : null;
+  const customOk = custom && 'plantings' in custom ? custom : null;
   return {
-    baseline: baseline === 'wheat'
-      ? { id: 'baseline', cycleYears: 1, plantings: [{ crop: 'wheat', plant: [10, 15], yearOffset: 0 }], display: ['wheat', 'wheat', 'wheat'] }
-      : {
-          id: 'baseline', cycleYears: 2,
-          // cotton Apr 10 → ~Oct 22; wheat sown after cotton, Nov 1 → ~Jun 28 next year
-          plantings: [{ crop: 'cotton', plant: [4, 10], yearOffset: 0 }, { crop: 'wheat', plant: [11, 1], yearOffset: 0 }],
-          display: ['wheat', 'cotton', 'wheat'],
-        },
+    baseline: customOk ?? (baseline === 'wheatCotton' ? fixedBaseline('wheatCotton') : fixedBaseline('wheat')),
+    ...suggestedRotations(),
+  };
+}
+
+function fixedBaseline(baseline: 'wheat' | 'wheatCotton'): RotationDef {
+  return baseline === 'wheat'
+    ? { id: 'baseline', cycleYears: 1, plantings: [{ crop: 'wheat', plant: [10, 15], yearOffset: 0 }], display: ['wheat', 'wheat', 'wheat'] }
+    : {
+        id: 'baseline', cycleYears: 2,
+        // cotton Apr 10 → ~Oct 22; wheat sown after cotton, Nov 1 → ~Jun 28 next year
+        plantings: [{ crop: 'cotton', plant: [4, 10], yearOffset: 0 }, { crop: 'wheat', plant: [11, 1], yearOffset: 0 }],
+        display: ['wheat', 'cotton', 'wheat'],
+      };
+}
+
+function suggestedRotations(): Record<'waterSaving' | 'regenerative', RotationDef> {
+  return {
     waterSaving: {
       id: 'waterSaving', cycleYears: 3,
       // sorghum Apr 20 → Aug 28; wheat Oct 15 → Jun 11; chickpea Mar 15 (yr 2) → Jul 3

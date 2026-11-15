@@ -1,6 +1,7 @@
 import { createContext, useContext } from 'react';
 import type { PresetId } from './data/presets';
 import type { Field } from './lib/field';
+import type { BaselineSpec } from './engine/rotation';
 
 export type Mode = 'farmer' | 'scientist';
 export type Soil = 'sand' | 'loam' | 'clay';
@@ -14,7 +15,7 @@ export interface AppState {
   presetId: PresetId | null;
   soil: Soil;
   irrigation: Irrigation;
-  rotation: 'wheat' | 'wheatCotton';
+  rotation: BaselineSpec; // the farmer's current rotation: a preset baseline or their own cycle
   priorities: Record<PriorityKey, number>; // 0..100
   dT: number; // °C, 0..3.5
   dP: number; // %, -40..+20

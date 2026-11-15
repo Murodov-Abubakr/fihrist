@@ -5,6 +5,7 @@ import { FieldMap } from './FieldMap';
 import { PlaceSearch } from './PlaceSearch';
 import { Icon, type IconName } from './icons';
 import { DataStatus } from './DataStatus';
+import { RotationEditor, toCustom } from './RotationEditor';
 import type { ClimateState } from '../data/useClimate';
 
 const PRIORITY_ICONS: Record<PriorityKey, IconName> = { water: 'water', nitrogen: 'nitrogen', erosion: 'erosion', organic: 'organic', forage: 'forage', income: 'income' };
@@ -102,8 +103,16 @@ export function LeftPanel({ climate, onRetry }: { climate: ClimateState; onRetry
           </div>
           <div>
             <div className="mb-2 text-xs uppercase tracking-[0.14em] text-slate">{t('panel.rotation')}</div>
-            <Segmented label={t('panel.rotation')} value={state.rotation} onChange={(v) => set({ rotation: v })}
-              options={[{ v: 'wheat' as const, label: t('rotations.wheat') }, { v: 'wheatCotton' as const, label: t('rotations.wheatCotton') }]} />
+            <Segmented label={t('panel.rotation')} value={typeof state.rotation === 'object' ? 'custom' : state.rotation}
+              onChange={(v) => set({ rotation: v === 'custom' ? toCustom(state.rotation) : v })}
+              options={[
+                { v: 'wheat' as const, label: t('rotations.wheat') },
+                { v: 'wheatCotton' as const, label: t('rotations.wheatCotton') },
+                { v: 'custom' as const, label: t('rotations.custom') },
+              ]} />
+            {typeof state.rotation === 'object' && (
+              <div className="mt-3"><RotationEditor value={state.rotation} onApply={(c) => set({ rotation: c })} /></div>
+            )}
           </div>
         </div>
       </Section>

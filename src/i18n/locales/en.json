@@ -52,7 +52,8 @@
     "regenerative": "Fihrist regenerative",
     "seqBaseline": "Wheat → Wheat → Wheat",
     "seqWater": "Winter wheat → Chickpea → Sorghum",
-    "seqRegen": "Winter wheat → Mung bean → Cereal + winter cover"
+    "seqRegen": "Winter wheat → Mung bean → Cereal + winter cover",
+    "custom": "My own rotation"
   },
   "priorities": {
     "water": "Save water",
@@ -155,7 +156,8 @@
     "chickpea": "Chickpea",
     "sorghum": "Sorghum",
     "mung": "Mung bean",
-    "cover": "Cereal + cover"
+    "cover": "Cereal + cover",
+    "coverOnly": "Winter cover crop"
   },
   "data": {
     "loading": "Reading NASA POWER data…",
@@ -295,5 +297,18 @@
     "drawHint": "Zoom in to your field, then tap its corners ({{n}} so far). Drag a corner to move it.",
     "useField": "Use this field",
     "edit": "Edit field"
+  },
+  "editor": {
+    "year": "Year {{n}}",
+    "spring": "Spring / summer crop",
+    "autumn": "Autumn / winter crop",
+    "none": "— nothing (fallow)",
+    "addYear": "+ Add a year",
+    "removeYear": "− Remove last year",
+    "fallow": "Fallow",
+    "applied": "Your rotation is used as the baseline.",
+    "empty": "Add at least one harvested crop.",
+    "overlap": "{{a}} (year {{ya}}) is still in the field when {{b}} (year {{yb}}) would be sown. Change one of them.",
+    "dates": "Sowing dates used: chickpea 15 Mar, cotton 10 Apr, sorghum 20 Apr, mung bean 20 Jun (after wheat), cover crop 5 Oct, wheat 15 Oct (1 Nov after cotton). The cycle repeats."
   }
 }
