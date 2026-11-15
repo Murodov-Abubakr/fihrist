@@ -2,6 +2,7 @@ import { useMemo } from 'react';
 import { monthlyClimatology, type MonthClimate } from '../engine/climate.ts';
 import type { Derived } from './useDerived.ts';
 import { regionOf, type RegionId } from '../engine/params.ts';
+import { stressCalendar } from '../engine/stress.ts';
 import { rankRotations, type PriorityKey, type RankedRotation } from '../engine/ranking.ts';
 import { rotationDefs, simulateRotation, type Irrigation, type RotationId, type RotationResult } from '../engine/rotation.ts';
 
@@ -18,6 +19,8 @@ export interface Analysis {
   ranked: Record<RotationId, RankedRotation>;
   order: RotationId[];
   climate: ClimateSummary;
+  /** hot/frost days and heat + dry compound months from this field's own history (with climate deltas applied) */
+  stress: ReturnType<typeof stressCalendar>;
   region: RegionId;
   outOfRegion: boolean;
   irrigation: Irrigation;
@@ -44,7 +47,8 @@ function useSimulation(derived: Derived | null, irrigation: Irrigation, baseline
       et0: sum((m) => m.et0), rain: sum((m) => m.rain), peff: sum((m) => m.peff),
       julyTmax: months[series.lat >= 0 ? 6 : 0].tmax, frostDays: sum((m) => m.frostDays), elevation: series.elevation, months,
     };
-    return { results, climate, region, outOfRegion, dT: derived.dT, dP: derived.dP };
+    const stress = stressCalendar(series);
+    return { results, climate, stress, region, outOfRegion, dT: derived.dT, dP: derived.dP };
   }, [derived, irrigation, baseline]);
 }
 

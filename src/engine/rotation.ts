@@ -22,7 +22,8 @@ import { effectiveRainUSDA } from './water.ts';
 
 export type RotationId = 'baseline' | 'waterSaving' | 'regenerative';
 export type Irrigation = 'rainfed' | 'canal' | 'drip';
-type PlantingCrop = CropId | 'cover';
+export type PlantingCrop = CropId | 'cover';
+const CROP_LIST: PlantingCrop[] = ['wheat', 'cotton', 'chickpea', 'sorghum', 'mung', 'cover'];
 
 interface Planting {
   crop: PlantingCrop;
@@ -112,7 +113,12 @@ export interface RotationResult {
   peopleFedP: { p10: number; p50: number; p90: number };
   nBalance10yKg: number; // cumulative fixed − removed over the simulated years
   paramsUsed: Param[];
+  /** field calendar per cycle year (index 0 = first year of the cycle) × 12 months, averaged over the replay years */
+  calendar: MonthCover[][];
 }
+
+/** Share of a month's days with a living crop, and which crops occupied it (as a share of the month's days). */
+export interface MonthCover { live: number; crops: { crop: PlantingCrop; share: number }[] }
 
 export interface SimOptions {
   irrigation: Irrigation;
@@ -211,7 +217,7 @@ export function simulateRotation(s: DailySeries, dd: DailyDerived, def: Rotation
   const idxOf = new Map<string, number>();
   dd.dates.forEach((d, i) => idxOf.set(`${d.y}-${d.m}-${d.d}`, i));
 
-  const occupied = new Uint8Array(n); // 1 = living crop/cover on field
+  const occupied = new Uint8Array(n); // 0 = bare; k = CROP_LIST[k - 1] living on the field
   const seasons: SeasonResult[] = [];
 
   const firstYear = dd.dates[0].y;
@@ -223,7 +229,8 @@ export function simulateRotation(s: DailySeries, dd: DailyDerived, def: Rotation
       const len = p.lengthDays ?? seasonLength(paramsOf(p.crop));
       if (sowIdx + len > n) continue;
       const harvestYear = dd.dates[sowIdx + len - 1].y;
-      for (let k = 0; k < len; k++) occupied[sowIdx + k] = 1;
+      const code = CROP_LIST.indexOf(p.crop) + 1;
+      for (let k = 0; k < len; k++) occupied[sowIdx + k] = code;
       if (harvestYear < fromYear || harvestYear > toYear) continue;
 
       const w = seasonWater(s, dd, rainByMonth, daysInMonth, p.crop, sowIdx, len, irrigated, opt.region);
@@ -280,8 +287,26 @@ export function simulateRotation(s: DailySeries, dd: DailyDerived, def: Rotation
   if (irrigated) paramsUsed.push(opt.irrigation === 'drip' ? IRRIGATION_EFFICIENCY.drip : IRRIGATION_EFFICIENCY.canal);
   paramsUsed.push(UREA_USD_T);
 
+  // Field calendar. Cycles start in years ≡ firstYear (mod cycle), so cycle year = (y − firstYear) mod cycle.
+  const cyc = def.cycleYears;
+  const acc = Array.from({ length: cyc }, () => Array.from({ length: 12 }, () => ({ days: 0, live: 0, by: new Map<PlantingCrop, number>() })));
+  dd.dates.forEach((d, i) => {
+    if (d.y < fromYear || d.y > toYear) return;
+    const cell = acc[(((d.y - firstYear) % cyc) + cyc) % cyc][d.m - 1];
+    cell.days++;
+    const code = occupied[i];
+    if (!code) return;
+    cell.live++;
+    const crop = CROP_LIST[code - 1];
+    cell.by.set(crop, (cell.by.get(crop) ?? 0) + 1);
+  });
+  const calendar: MonthCover[][] = acc.map((row) => row.map((c) => ({
+    live: c.days ? c.live / c.days : 0,
+    crops: [...c.by.entries()].map(([crop, k]) => ({ crop, share: k / c.days })).sort((a, b) => b.share - a.share),
+  })));
+
   return {
-    id: def.id, def, seasons, years, mean,
+    id: def.id, def, seasons, years, mean, calendar,
     peopleFedP: { p10: quantile(pf, 0.1), p50: quantile(pf, 0.5), p90: quantile(pf, 0.9) },
     nBalance10yKg: years.reduce((t, y) => t + y.nFixedKg - y.nRemovedKg, 0),
     paramsUsed,

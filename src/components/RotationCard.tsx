@@ -10,12 +10,13 @@ import type { RotationId, RotationResult } from '../engine/rotation';
 import type { PriorityKey } from '../engine/ranking';
 import type { Param } from '../engine/params';
 import { MC_LIMITS, type Band, type McSummary } from '../engine/montecarlo';
+import { ROTATION_COLOR } from '../lib/palette';
 
 export type { RotationId };
 type Crop = 'wheat' | 'cotton' | 'chickpea' | 'sorghum' | 'mung' | 'cover';
 
 /** Ring accent per rotation (outer ring of each crop node). */
-const ACCENT: Record<RotationId, string> = { baseline: '#A3A9B1', waterSaving: '#6FD6BF', regenerative: '#E8B391' };
+const ACCENT = ROTATION_COLOR;
 const FALLBACK_SEQ: Record<RotationId, Crop[]> = { baseline: ['wheat', 'wheat', 'wheat'], waterSaving: ['wheat', 'chickpea', 'sorghum'], regenerative: ['wheat', 'mung', 'cover'] };
 const SECTIONS = ['why', 'evidence', 'benefits', 'gaps', 'risks'] as const;
 const SECTION_ICON: Record<(typeof SECTIONS)[number], IconName> = { why: 'spark', evidence: 'satellite', benefits: 'trend', gaps: 'gap', risks: 'alert' };

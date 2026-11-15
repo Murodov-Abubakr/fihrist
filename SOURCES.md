@@ -78,6 +78,20 @@ Quality: **sourced** = from the cited source for this crop/region · **proxy** =
 | Climate sliders | Delta change: daily Tmax/Tmin + ΔT, daily rain × (1 + ΔP); RH, wind, radiation unchanged | Standard delta-change method; RH held constant so vapour pressure rises with warming |
 | Not sampled | Parameter uncertainty (yields, prices, fixation); irrigation water availability (canal assumed to deliver full demand) | Listed as information gaps |
 
+## Field year and stress calendar (`src/engine/stress.ts`, `RotationResult.calendar`)
+| Item | Choice | Source / rationale |
+|---|---|---|
+| Field calendar | Share of each month's days with a living crop, per cycle year, averaged over the 2015–2024 replay | Computed from the same crop calendars as the rotation results |
+| Frost day | Tmin ≤ 0 °C | CLAUDE.md §5 eq. 6 |
+| Hot day | Tmax ≥ 35 °C, shown as a count | Display threshold only — **TODO verify** a citable crop-specific heat-stress threshold |
+| Compound stress (partial) | Monthly mean Tmax and monthly rain → z-scores against the same calendar month in all complete years 2001–2024 of this field; flagged when z(heat) > 1 and z(dry) > 1 | CLAUDE.md §5 eq. 11 ("e.g. z > 1"). **2 of 4 signals**: soil moisture and NDVI not yet included |
+| Dryness defined only if the month's mean rain ≥ 10 mm | Avoids "drier than normal" in months that are normally dry | Project choice, documented here |
+
+Observed (2026-11-15): the index flags June–July 2012 and August 2022 at the Kansas preset (both widely reported US drought periods) and February 2021 / spring 2008 at all three Central Asian presets. The Central Asian drought years still need confirmation from FAO/WFP before any drought claim (CLAUDE.md §2 item 5).
+
+## Chart colours (`src/lib/palette.ts`)
+Rotation identity colours baseline `#CF7A4C`, water-saving `#6890DE`, regenerative `#23A383`, validated on the panel surface `#1E2126` with a palette validator (OKLCH lightness band, chroma floor, colour-vision-deficiency separation ΔE ≥ 8, normal-vision ΔE ≥ 15, contrast ≥ 3:1). Rotations are always named in text too.
+
 Not modelled yet (shown as information gaps): soil-water storage between months, nitrogen losses, wheat winter dormancy, farm costs other than replacing nitrogen.
 
 ## Map and UI assets

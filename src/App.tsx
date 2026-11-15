@@ -7,7 +7,9 @@ import { TopBar } from './components/TopBar';
 import { Banner } from './components/Banner';
 import { LeftPanel } from './components/LeftPanel';
 import { RotationCard, type RotationId } from './components/RotationCard';
-import { Timeline, ChartsShell } from './components/Timeline';
+import { Timeline } from './components/Timeline';
+import { Charts } from './components/Charts';
+import { Methodology } from './components/Methodology';
 import { Drawer } from './components/Drawer';
 import { ComputeGridPanel } from './components/ComputeGridPanel';
 import { useClimate } from './data/useClimate';
@@ -61,12 +63,12 @@ export default function App() {
             ))}
           </div>
           {state.mode === 'scientist' && <div className="relative"><ComputeGridPanel mc={mc} /></div>}
-          <div className="relative"><Timeline /></div>
-          <div className="relative"><ChartsShell /></div>
+          <div className="relative"><Timeline analysis={analysis} /></div>
+          <div className="relative"><Charts analysis={analysis} mc={mc.status === 'done' ? mc.summary : null} /></div>
         </div>
       </main>
       <Drawer open={methodOpen} title={t('nav.methodology')} onClose={closeMethod}>
-        <p className="text-sm leading-relaxed text-parchment">{t('drawer.methodologyBody')}</p>
+        <Methodology />
       </Drawer>
       </MotionConfig>
     </StoreContext.Provider>

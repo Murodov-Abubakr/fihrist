@@ -97,6 +97,25 @@ if (waterFirst !== 'Baseline') problems.push(`water-only priority: expected Base
 if (incomeFirst !== 'Fihrist regenerative') problems.push(`income-only priority: expected Fihrist regenerative first, got ${incomeFirst}`);
 console.log(`re-ranking: water-only -> ${waterFirst}; income-only -> ${incomeFirst}`);
 
+// Step 5: field-year timeline, charts and methodology content render from real engine output
+const step5 = await page.evaluate(() => {
+  const sec = (h) => [...document.querySelectorAll('section')].find((s) => s.querySelector('h2')?.textContent?.trim() === h);
+  const tl = sec('The field year');
+  const ch = sec('Ten years on this field');
+  return {
+    cropRows: tl ? tl.querySelectorAll('[role="row"]').length : 0,
+    cells: tl ? [...tl.querySelectorAll('[role="cell"]')].filter((c) => c.textContent?.trim()).length : 0,
+    lines: ch ? ch.querySelectorAll('.recharts-line path.recharts-curve').length : 0,
+    placeholder: /Chart appears after simulation|computed in step 5/.test(document.body.textContent ?? ''),
+  };
+});
+// Gissar/wheat baseline: header + 1 + 3 + 2 rotation rows + hot + frost + compound = 10 rows
+if (step5.cropRows !== 10) problems.push(`timeline: expected 10 rows, got ${step5.cropRows}`);
+if (step5.cells < 40) problems.push(`timeline: expected labelled cells, got ${step5.cells}`);
+if (step5.lines !== 6) problems.push(`charts: expected 6 lines (2 charts x 3 rotations), got ${step5.lines}`);
+if (step5.placeholder) problems.push('placeholder text still visible');
+console.log(`step 5: timeline rows ${step5.cropRows}, labelled cells ${step5.cells}, chart lines ${step5.lines}`);
+
 await click('Scientist');
 // Compute Grid: 12 batches finish (edge or local fallback) and bands appear on the cards
 try {
@@ -121,8 +140,9 @@ if (ru !== 'ru') problems.push(`html lang after RU = ${ru}`);
 await click('TJ');
 await click('EN');
 await click('Methodology');
-const dialog = await page.evaluate(() => !!document.querySelector('[role="dialog"]'));
-if (!dialog) problems.push('methodology drawer did not open');
+const dialog = await page.evaluate(() => document.querySelector('[role="dialog"]')?.textContent ?? null);
+if (dialog === null) problems.push('methodology drawer did not open');
+else for (const needle of ['Penman', 'FAO-33', 'GRDC', 'FoodData Central', 'Monte Carlo']) if (!dialog.includes(needle)) problems.push(`methodology drawer missing "${needle}"`);
 await page.keyboard.press('Escape');
 try {
   await page.waitForFunction(() => !document.querySelector('[role="dialog"]'), { timeout: 5000 });

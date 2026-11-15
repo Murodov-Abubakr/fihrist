@@ -17,6 +17,7 @@ export default defineConfig({
           map: ['leaflet', 'react-leaflet'],
           motion: ['framer-motion'],
           i18n: ['i18next', 'react-i18next'],
+          charts: ['recharts'],
         },
       },
     },

@@ -94,19 +94,39 @@
   },
   "timeline": {
     "title": "The field year",
-    "canopy": "Canopy",
+    "subtitle": "Average month on this field, NASA POWER replay {{from}}–{{to}}. Filled cell = living crop, dashed cell = bare soil.",
+    "cycleYear": "year {{n}}",
+    "living": "Living crop",
     "bare": "Bare soil",
-    "heat": "Heat",
-    "frost": "Frost",
-    "compound": "Compound stress",
-    "placeholder": "Month-by-month cover and stress, computed in step 5."
+    "hot": "Hot days (Tmax ≥ {{t}} °C)",
+    "frost": "Frost days (Tmin ≤ 0 °C)",
+    "compound": "Heat + dry",
+    "compoundNote": "Share of years in which the month was both abnormally hot and abnormally dry (z > 1 against this field’s own {{from}}–{{to}} history). 2 of 4 signals: soil moisture and NDVI are not included yet. “–” = a normally dry month.",
+    "events": "Most recent heat + dry months",
+    "eventLine": "{{month}} {{year}}: Tmax {{t}} °C (normal {{tn}}), rain {{r}} mm (normal {{rn}})",
+    "none": "No heat + dry months in the record.",
+    "cellLive": "{{share}}% of days with a living crop",
+    "waiting": "Waiting for climate data…"
   },
   "charts": {
-    "title": "Ten years ahead",
-    "soilN": "Soil nitrogen",
-    "water": "Water deficit",
-    "uncertainty": "People fed, P10–P90",
-    "placeholder": "Chart appears after simulation."
+    "title": "Ten years on this field",
+    "soilN": "Soil nitrogen balance",
+    "soilNSub": "Cumulative N fixed − N removed in harvests, kg N/ha (replay {{from}}–{{to}}). Losses are not modelled.",
+    "water": "Irrigation water",
+    "waterSub": "Water withdrawn per year, m³/ha (net need ÷ {{eff}} efficiency).",
+    "waterRainfed": "Unmet crop water",
+    "waterRainfedSub": "Crop water demand not covered by rain, m³/ha per year.",
+    "uncertainty": "Range of outcomes (P10–P90)",
+    "uncertaintySub": "P10–P90 across {{runs}} simulated 12-year futures; dot = P50.",
+    "uncertaintyReplay": "Range across rolling cycles {{from}}–{{to}} (Monte Carlo still running).",
+    "table": "Show data table",
+    "year": "Year",
+    "rotation": "Rotation",
+    "waiting": "Chart appears after simulation.",
+    "peopleFed": "People fed",
+    "peopleUnit": "people/ha/yr",
+    "noSpread": "No spread: with full canal supply assumed, weather changes how much water the crops take, not the harvest. Water cuts are not modelled yet.",
+    "mean": "avg"
   },
   "months": [
     "Jan",
@@ -124,7 +144,7 @@
   ],
   "drawer": {
     "close": "Close",
-    "methodologyBody": "Equations and sources will appear here (FAO-56 Penman–Monteith, Hargreaves, FAO-33 yield response, nitrogen balance)."
+    "methodologyEnglish": "The full methodology is in English: equations, data, and every parameter with its source and evidence level."
   },
   "loading": "Consulting the sky…",
   "crops": {
@@ -222,5 +242,13 @@
     "farmer": "In a bad decade (1 in 10): about {{people}} people per hectare and {{water}} m³ of water a year.",
     "farmerIrr": "In a dry decade (1 in 10) the canal water need rises to about {{water}} m³ a year.",
     "stress": "Climate stress test applied: {{dT}} °C, {{dP}} % rain"
+  },
+  "cropShort": {
+    "wheat": "Wheat",
+    "cotton": "Cotton",
+    "chickpea": "Chickpea",
+    "sorghum": "Sorghum",
+    "mung": "Mung",
+    "cover": "Cover"
   }
 }
