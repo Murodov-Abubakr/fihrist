@@ -179,7 +179,7 @@ try {
 } catch {
   problems.push('compute grid did not finish');
 }
-const metrics = await page.evaluate(() => document.querySelectorAll('dl dt').length);
+const metrics = await page.evaluate(() => document.querySelectorAll('article dl dt').length); // rotation cards only
 if (metrics !== 15) problems.push(`scientist mode: expected 15 metric labels, got ${metrics}`);
 await click('Farmer');
 await click('RU');

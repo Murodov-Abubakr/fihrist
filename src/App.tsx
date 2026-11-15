@@ -8,6 +8,7 @@ import { Banner } from './components/Banner';
 import { LeftPanel } from './components/LeftPanel';
 import { RotationCard, type RotationId } from './components/RotationCard';
 import { Timeline } from './components/Timeline';
+import { FieldPlots3D } from './components/FieldPlots3D';
 import { Charts } from './components/Charts';
 import { Methodology } from './components/Methodology';
 import { Validation } from './components/Validation';
@@ -76,6 +77,7 @@ export default function App() {
             </div>
           )}
           <FieldTotals analysis={analysis} />
+          <FieldPlots3D analysis={analysis} />
           <div className={`relative grid gap-x-6 gap-y-8 md:grid-cols-2 xl:grid-cols-3 ${stressed ? 'pt-2' : 'pt-10'}`}>
             {cards.map((id, i) => (
               <RotationCard key={id} id={id} total={cards.length} index={i} analysis={analysis} mc={mc.status === 'done' ? mc.summary : null} />

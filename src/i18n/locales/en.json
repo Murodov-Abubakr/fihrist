@@ -329,6 +329,25 @@
     "useField": "Use this field",
     "edit": "Edit field"
   },
+  "plots3d": {
+    "title": "Your field in 3D",
+    "intro": "Your outlined field, split into equal-area plots from west to east. Tap a plot, choose its rotation, and play the three years to see what grows where.",
+    "example": "Example: a 1-hectare square at this point. Outline your field on the globe to see its real shape, corners and area here.",
+    "dragHint": "Drag to turn · tap a plot",
+    "play": "Play",
+    "pause": "Pause",
+    "monthLabel": "Month of the three-year rotation",
+    "month": "Year {{y}} · {{m}}",
+    "plots": "Number of plots",
+    "assign": "Rotation on plot {{n}}",
+    "bare": "Bare soil",
+    "totals": "Whole field with this plan, per year",
+    "vsBaseline": "Second line: difference from growing the baseline on the whole field.",
+    "coords": "Corner coordinates",
+    "plotCenter": "Plot {{n}} centre",
+    "canvasLabel": "3D view of the field with {{n}} plots, {{month}} of year {{year}}. The plot list next to it gives the same information.",
+    "note": "Plot results = each rotation's per-hectare results (2015–2024 replay) × plot area. Plots are treated as independent: no shading or water sharing between them."
+  },
   "editor": {
     "year": "Year {{n}}",
     "spring": "Spring / summer crop",
