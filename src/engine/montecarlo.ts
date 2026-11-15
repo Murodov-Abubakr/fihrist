@@ -20,9 +20,10 @@ import { deriveDaily, type DailyDerived, type DailySeries } from './climate.ts';
 import { seasonLength } from './kc.ts';
 import { IRRIGATION_EFFICIENCY, UREA_N_SHARE, UREA_USD_T, KCAL_PER_PERSON_DAY, type RegionId } from './params.ts';
 import {
-  monthTables, paramsOf, rotationDefs, seasonEconomics, seasonWater,
+  paramsOf, rotationDefs, seasonEconomics, seasonWater, simulateRotation,
   type Irrigation, type RotationDef, type RotationId,
 } from './rotation.ts';
+import type { Soil } from './soilwater.ts';
 
 /**
  * Horizon is 12 years, not 10 (CLAUDE.md §5 says 10): 12 holds WHOLE cycles of the 1-, 2- and 3-year
@@ -55,11 +56,11 @@ export interface McPayload {
 }
 
 /** Builds the season tables for the three rotations (heavy part; runs in the browser). */
-export function buildSeasonTables(s: DailySeries, dd: DailyDerived, opt: { irrigation: Irrigation; region: RegionId; baseline: 'wheat' | 'wheatCotton' }): McPayload {
+export function buildSeasonTables(s: DailySeries, dd: DailyDerived, opt: { irrigation: Irrigation; region: RegionId; baseline: 'wheat' | 'wheatCotton'; soil?: Soil }): McPayload {
   const defs = rotationDefs(opt.baseline);
   const irrigated = opt.irrigation !== 'rainfed';
+  const soil = opt.soil ?? 'loam';
   const eff = opt.irrigation === 'drip' ? IRRIGATION_EFFICIENCY.drip.value : IRRIGATION_EFFICIENCY.canal.value;
-  const { rainByMonth, daysInMonth } = monthTables(s, dd);
   const idxOf = new Map<string, number>();
   dd.dates.forEach((d, i) => idxOf.set(`${d.y}-${d.m}-${d.d}`, i));
   const firstYear = dd.dates[0].y;
@@ -67,9 +68,12 @@ export function buildSeasonTables(s: DailySeries, dd: DailyDerived, opt: { irrig
 
   const rotations: RotationTable[] = (['baseline', 'waterSaving', 'regenerative'] as RotationId[]).map((id) => {
     const def: RotationDef = defs[id];
+    // Soil water at the start of each season: the typical fallow length and end-of-season depletion of
+    // the preceding planting, taken from the continuous replay of this rotation on this field.
+    const ante = simulateRotation(s, dd, def, { irrigation: opt.irrigation, region: opt.region, soil, fromYear: firstYear, toYear: lastYear }).antecedent;
     return {
       id, cycleYears: def.cycleYears,
-      plantings: def.plantings.map((p) => {
+      plantings: def.plantings.map((p, j) => {
         const len = p.lengthDays ?? seasonLength(paramsOf(p.crop));
         const bySowYear: Record<string, SeasonVec> = {};
         let harvestLag = 0;
@@ -77,7 +81,7 @@ export function buildSeasonTables(s: DailySeries, dd: DailyDerived, opt: { irrig
           const sowIdx = idxOf.get(`${y}-${p.plant[0]}-${p.plant[1]}`);
           if (sowIdx === undefined || sowIdx + len > dd.dates.length) continue;
           harvestLag = dd.dates[sowIdx + len - 1].y - y;
-          const w = seasonWater(s, dd, rainByMonth, daysInMonth, p.crop, sowIdx, len, irrigated, opt.region);
+          const w = seasonWater(s, dd, p.crop, Math.max(0, sowIdx - ante[j].gapDays), sowIdx, len, irrigated, opt.region, soil, ante[j].dr0);
           const e = seasonEconomics(p.crop, w.yieldT, opt.region);
           const water = irrigated ? (w.netIrrigation * 10) / eff : 10 * (w.etc - w.eta);
           bySowYear[y] = [e.kcal, e.proteinKg, e.nRemovedKg, e.nFixedKg, e.revenueUsd, water];

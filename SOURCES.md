@@ -78,6 +78,30 @@ Quality: **sourced** = from the cited source for this crop/region · **proxy** =
 | Climate sliders | Delta change: daily Tmax/Tmin + ΔT, daily rain × (1 + ΔP); RH, wind, radiation unchanged | Standard delta-change method; RH held constant so vapour pressure rises with warming |
 | Not sampled | Parameter uncertainty (yields, prices, fixation); irrigation water availability (canal assumed to deliver full demand) | Listed as information gaps |
 
+## Soil water model (`src/engine/soilwater.ts`, added 2026-11-15)
+Daily root-zone water balance, FAO-56 chapter 8 (Eqs. 82–86, 88), with bare-soil fallow evaporation from chapter 7 (Eqs. 71, 74). Values read from the FAO web edition (ch. 7: https://www.fao.org/4/x0490e/x0490e0c.htm, ch. 8: https://www.fao.org/4/x0490e/x0490e0e.htm). Eq. 84 and Eq. 74 are images on the web page; their forms were checked against FAO Examples 37 (Ks = 0.97) and 31.
+
+| Parameter | Value used (midpoint of FAO range) | Source |
+|---|---|---|
+| θFC − θWP sand / loam / clay | 0.08 / 0.155 / 0.16 m³/m³ | FAO-56 Table 19 (0.05–0.11 / 0.13–0.18 / 0.12–0.20) |
+| REW sand / loam / clay | 4.5 / 9 / 10 mm | Table 19 (2–7 / 8–10 / 8–12) |
+| TEW (Ze 0.10 m) sand / loam / clay | 9 / 19 / 25.5 mm | Table 19 (6–12 / 16–22 / 22–29) |
+| Zr winter wheat / cotton / chickpea / sorghum / mung | 1.65 / 1.35 / 0.8 / 1.5 / 0.8 m | Table 22 (1.5–1.8 / 1.0–1.7 / 0.6–1.0 / 1.0–2.0 / Green gram 0.6–1.0) |
+| p (ETc ≈ 5 mm/d) wheat / cotton / chickpea / sorghum / mung | 0.55 / 0.65 / 0.50 / 0.55 / 0.45 | Table 22; adjusted daily p + 0.04(5 − ETc), 0.1–0.8 (Table 22 fn 2) |
+| Kcb bare soil | 0.15 | Table 18 ("annual crop – (nearly) bare soil") |
+| Kc max for bare-soil evaporation | 1.20 | Example 31 (text range 1.05–1.30; Eq. 72 not modelled) |
+
+Simplifications: no runoff, no capillary rise, roots at full depth from sowing, one layer, fallow tracked over the next crop's root depth. Seasons start from the previous season's end state (continuous replay); Monte Carlo season tables start from the rotation's average end-of-season state.
+
+## Validation (`src/engine/validation.ts`, Validation drawer)
+| Item | Value | Source |
+|---|---|---|
+| Observed | Kansas wheat yield, statewide, all practices, 2015–2024: 37, 57, 48, 38, 52, 45, 52, 37, 35, 43 bu/ac | USDA NASS "Kansas Wheat History", via Kansas Wheat: https://kswheat.com/growers/average-kansas-wheat-production (read 2026-11-15) |
+| Ellis County (model point) | not retrieved | needs the NASS Quick Stats API key |
+| OpenET ET | not retrieved — **pending** | needs an OpenET API key |
+| Result (loam, 2026-11-15) | r = 0.77, direction 8/9, level −45 %, MAE 1.34 t/ha | computed live in the drawer; regression-guarded in `validation.test.ts` |
+| Sensitivity (not used in the app) | without the Kcb,bare diffusive fallow term: level −29 %, r = 0.85 | `scripts/validation-table.mts` with KCB_BARE = 0; reported only, the FAO default is kept |
+
 ## Field year and stress calendar (`src/engine/stress.ts`, `RotationResult.calendar`)
 | Item | Choice | Source / rationale |
 |---|---|---|
@@ -92,7 +116,7 @@ Observed (2026-11-15): the index flags June–July 2012 and August 2022 at the K
 ## Chart colours (`src/lib/palette.ts`)
 Rotation identity colours baseline `#CF7A4C`, water-saving `#6890DE`, regenerative `#23A383`, validated on the panel surface `#1E2126` with a palette validator (OKLCH lightness band, chroma floor, colour-vision-deficiency separation ΔE ≥ 8, normal-vision ΔE ≥ 15, contrast ≥ 3:1). Rotations are always named in text too.
 
-Not modelled yet (shown as information gaps): soil-water storage between months, nitrogen losses, wheat winter dormancy, farm costs other than replacing nitrogen.
+Not modelled yet (shown as information gaps): runoff and capillary rise in the soil water balance, stage-specific Ky, nitrogen losses, wheat winter dormancy, farm costs other than replacing nitrogen.
 
 ## Map and UI assets
 | Asset | Source / licence |

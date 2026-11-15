@@ -3,6 +3,7 @@ import { monthlyClimatology, type MonthClimate } from '../engine/climate.ts';
 import type { Derived } from './useDerived.ts';
 import { regionOf, type RegionId } from '../engine/params.ts';
 import { stressCalendar } from '../engine/stress.ts';
+import type { Soil } from '../engine/soilwater.ts';
 import { rankRotations, type PriorityKey, type RankedRotation } from '../engine/ranking.ts';
 import { rotationDefs, simulateRotation, type Irrigation, type RotationId, type RotationResult } from '../engine/rotation.ts';
 
@@ -30,14 +31,14 @@ export interface Analysis {
 }
 
 /** Heavy part (depends only on weather + field settings). Ranking is recomputed separately on slider moves. */
-function useSimulation(derived: Derived | null, irrigation: Irrigation, baseline: 'wheat' | 'wheatCotton') {
+function useSimulation(derived: Derived | null, irrigation: Irrigation, baseline: 'wheat' | 'wheatCotton', soil: Soil) {
   return useMemo(() => {
     if (!derived) return null;
     const series = derived.series;
     const { region, outOfRegion } = regionOf(series.lat, series.lon);
     const defs = rotationDefs(baseline);
     const results = Object.fromEntries(
-      ROTATION_IDS.map((id) => [id, simulateRotation(series, derived.dd, defs[id], { irrigation, region })]),
+      ROTATION_IDS.map((id) => [id, simulateRotation(series, derived.dd, defs[id], { irrigation, region, soil })]),
     ) as Record<RotationId, RotationResult>;
     const months = monthlyClimatology(series, derived.dd);
     const sum = (f: (m: MonthClimate) => number) => months.reduce((t, m) => t + f(m), 0);
@@ -49,11 +50,11 @@ function useSimulation(derived: Derived | null, irrigation: Irrigation, baseline
     };
     const stress = stressCalendar(series);
     return { results, climate, stress, region, outOfRegion, dT: derived.dT, dP: derived.dP };
-  }, [derived, irrigation, baseline]);
+  }, [derived, irrigation, baseline, soil]);
 }
 
-export function useRotations(derived: Derived | null, irrigation: Irrigation, baseline: 'wheat' | 'wheatCotton', priorities: Record<PriorityKey, number>): Analysis | null {
-  const sim = useSimulation(derived, irrigation, baseline);
+export function useRotations(derived: Derived | null, irrigation: Irrigation, baseline: 'wheat' | 'wheatCotton', priorities: Record<PriorityKey, number>, soil: Soil): Analysis | null {
+  const sim = useSimulation(derived, irrigation, baseline, soil);
   return useMemo(() => {
     if (!sim) return null;
     const list = rankRotations(ROTATION_IDS.map((id) => sim.results[id]), priorities, irrigation);

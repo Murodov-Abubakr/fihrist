@@ -10,6 +10,7 @@ import { RotationCard, type RotationId } from './components/RotationCard';
 import { Timeline } from './components/Timeline';
 import { Charts } from './components/Charts';
 import { Methodology } from './components/Methodology';
+import { Validation } from './components/Validation';
 import { Drawer } from './components/Drawer';
 import { ComputeGridPanel } from './components/ComputeGridPanel';
 import { useClimate } from './data/useClimate';
@@ -24,13 +25,15 @@ export default function App() {
   const store = useMemo(() => ({ state, set }), [state, set]);
   const [methodOpen, setMethodOpen] = useState(false);
   const closeMethod = useCallback(() => setMethodOpen(false), []);
+  const [validOpen, setValidOpen] = useState(false);
+  const closeValid = useCallback(() => setValidOpen(false), []);
   const { state: climate, retry } = useClimate(state.lat, state.lon, state.presetId);
 
   const series = climate.status === 'ready' ? climate.result.series : null;
   // climate-stress sliders applied once (debounced), shared by the replay and the Monte Carlo
   const derived = useDerived(series, state.dT, state.dP);
-  const analysis = useRotations(derived, state.irrigation, state.rotation, state.priorities);
-  const mc = useMonteCarlo(derived, state.irrigation, state.rotation, analysis?.region ?? null);
+  const analysis = useRotations(derived, state.irrigation, state.rotation, state.priorities, state.soil);
+  const mc = useMonteCarlo(derived, state.irrigation, state.rotation, analysis?.region ?? null, state.soil);
   // Cards are ordered by the farmer's priorities; canonical order until results exist.
   const cards: RotationId[] = analysis?.order ?? ROTATION_IDS;
   const stressed = !!analysis && (analysis.dT !== 0 || analysis.dP !== 0);
@@ -40,7 +43,7 @@ export default function App() {
       {/* Framer Motion honours the OS "reduce motion" setting only when told to */}
       <MotionConfig reducedMotion="user">
       <SpaceMap />
-      <TopBar onMethodology={() => setMethodOpen(true)} />
+      <TopBar onMethodology={() => setMethodOpen(true)} onValidation={() => setValidOpen(true)} />
       <Banner />
       <main className="mx-auto grid max-w-[1600px] gap-6 px-4 py-6 sm:px-6 lg:grid-cols-[minmax(320px,380px)_1fr]">
         <LeftPanel climate={climate} onRetry={retry} />
@@ -69,6 +72,9 @@ export default function App() {
       </main>
       <Drawer open={methodOpen} title={t('nav.methodology')} onClose={closeMethod}>
         <Methodology />
+      </Drawer>
+      <Drawer open={validOpen} title={t('nav.validation')} onClose={closeValid}>
+        <Validation soil={state.soil} />
       </Drawer>
       </MotionConfig>
     </StoreContext.Provider>

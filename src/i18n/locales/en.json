@@ -8,7 +8,8 @@
     "farmer": "Farmer",
     "scientist": "Scientist",
     "mode": "View mode",
-    "language": "Language"
+    "language": "Language",
+    "validation": "Validation"
   },
   "banner": {
     "text": "Fihrist supports, and does not replace, farmer and agronomist judgment.",
@@ -144,7 +145,8 @@
   ],
   "drawer": {
     "close": "Close",
-    "methodologyEnglish": "The full methodology is in English: equations, data, and every parameter with its source and evidence level."
+    "methodologyEnglish": "The full methodology is in English: equations, data, and every parameter with its source and evidence level.",
+    "validationEnglish": "The validation report is in English. It is computed live from the Kansas data with the same engine as the cards."
   },
   "loading": "Consulting the sky…",
   "crops": {
@@ -190,7 +192,7 @@
   "gap": {
     "grid": "NASA POWER cells are about 50 km wide (cell elevation {{elev}} m); a 1 ha field can be warmer, cooler or wetter.",
     "rainDoubt": "Satellite-model rain can be too low in mountain valleys — check against a local rain gauge.",
-    "soil": "Water stored in the soil between months is not modelled yet, so rainfed yields are likely underestimated.",
+    "soil": "Soil water is modelled (FAO-56), but runoff, capillary rise and winter dormancy are not. In Kansas, modelled rainfed wheat yields follow real good and bad years but sit well below USDA averages, so rainfed food numbers are conservative (see Validation).",
     "nLoss": "Nitrogen losses (leaching, gas) are not modelled, so the real nitrogen debt is likely larger.",
     "prices": "Prices are international reference prices, not your local market.",
     "dormancy": "Winter dormancy of wheat is not modelled yet (open question).",

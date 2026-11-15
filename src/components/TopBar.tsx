@@ -21,7 +21,7 @@ function Wordmark() {
   );
 }
 
-export function TopBar({ onMethodology }: { onMethodology: () => void }) {
+export function TopBar({ onMethodology, onValidation }: { onMethodology: () => void; onValidation: () => void }) {
   const { t, i18n } = useTranslation();
   const { state, set } = useStore();
 
@@ -41,6 +41,9 @@ export function TopBar({ onMethodology }: { onMethodology: () => void }) {
           ))}
           <button className="tab" aria-pressed={false} data-action="methodology" onClick={onMethodology}>
             {t('nav.methodology')}
+          </button>
+          <button className="tab" aria-pressed={false} data-action="validation" onClick={onValidation}>
+            {t('nav.validation')}
           </button>
         </nav>
 

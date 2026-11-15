@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { buildSeasonTables, type McSummary } from '../engine/montecarlo.ts';
 import type { RegionId } from '../engine/params.ts';
 import type { Irrigation } from '../engine/rotation.ts';
+import type { Soil } from '../engine/soilwater.ts';
 import { runComputeGrid, type NodeReport } from './computeGrid.ts';
 import type { Derived } from './useDerived.ts';
 
@@ -15,15 +16,15 @@ export const MC_RUNS = 2400;
 export const MC_BATCHES = 12;
 
 /** Builds season tables (main thread) then runs the Compute Grid; restarts when inputs change. */
-export function useMonteCarlo(derived: Derived | null, irrigation: Irrigation, baseline: 'wheat' | 'wheatCotton', region: RegionId | null): McState {
+export function useMonteCarlo(derived: Derived | null, irrigation: Irrigation, baseline: 'wheat' | 'wheatCotton', region: RegionId | null, soil: Soil): McState {
   const [state, setState] = useState<McState>({ status: 'idle' });
 
   const tables = useMemo(() => {
     if (!derived || !region) return null;
     const t0 = performance.now();
-    const payload = buildSeasonTables(derived.series, derived.dd, { irrigation, region, baseline });
+    const payload = buildSeasonTables(derived.series, derived.dd, { irrigation, region, baseline, soil });
     return { payload, ms: performance.now() - t0 };
-  }, [derived, irrigation, baseline, region]);
+  }, [derived, irrigation, baseline, region, soil]);
 
   useEffect(() => {
     if (!tables) { setState({ status: 'idle' }); return; }

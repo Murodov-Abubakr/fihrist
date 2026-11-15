@@ -149,6 +149,24 @@ try {
 } catch {
   problems.push('methodology drawer did not close on Escape');
 }
+// Validation drawer: Kansas preset loads, model vs NASS statistics render
+await click('Validation');
+try {
+  await page.waitForFunction(() => /Year-to-year r/.test(document.querySelector('[role="dialog"]')?.textContent ?? ''), { timeout: 10000 });
+  const v = await page.evaluate(() => {
+    const d = document.querySelector('[role="dialog"]');
+    return { lines: d?.querySelectorAll('.recharts-line').length ?? 0, text: d?.textContent ?? '' };
+  });
+  if (v.lines !== 2) problems.push(`validation chart: expected 2 lines, got ${v.lines}`);
+  if (!/OpenET/.test(v.text) || !/NASS/.test(v.text)) problems.push('validation drawer missing NASS/OpenET sections');
+  const r = v.text.match(/Year-to-year r([\d.]+)/);
+  console.log(`validation drawer: r = ${r?.[1]}`);
+} catch {
+  problems.push('validation drawer did not render');
+}
+await page.keyboard.press('Escape');
+await page.waitForFunction(() => !document.querySelector('[role="dialog"]'), { timeout: 5000 }).catch(() => problems.push('validation drawer did not close'));
+
 await new Promise((r) => setTimeout(r, 1800)); // let any map fly-to finish before clicking the map
 
 // Map click → coordinates update and stay in range

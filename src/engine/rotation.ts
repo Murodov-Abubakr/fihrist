@@ -13,12 +13,12 @@
  */
 import type { DailyDerived, DailySeries } from './climate.ts';
 import { CROPS, type CropId, type CropParams } from './crops.ts';
-import { kcOnDay, seasonLength } from './kc.ts';
+import { seasonLength } from './kc.ts';
+import { waterWindow, type Soil, type WaterWindow } from './soilwater.ts';
 import {
   IRRIGATION_EFFICIENCY, KCAL_PER_PERSON_DAY, KY, N_FIXED, N_TO_PROTEIN, NUTRITION, PRICE_USD_T,
   UREA_N_SHARE, UREA_USD_T, YM, type Param, type RegionId,
 } from './params.ts';
-import { effectiveRainUSDA } from './water.ts';
 
 export type RotationId = 'baseline' | 'waterSaving' | 'regenerative';
 export type Irrigation = 'rainfed' | 'canal' | 'drip';
@@ -81,7 +81,12 @@ export interface SeasonResult {
   et0: number; // mm (season sum)
   rain: number; // mm (season sum)
   yieldT: number; // t/ha
+  sowDepletion: number; // root-zone depletion at sowing, fraction of TAW (0 = full profile)
+  fallowRain: number; // mm since the previous crop ended
 }
+
+/** Soil water carried into each planting of the cycle (for the Monte Carlo season tables). */
+export interface Antecedent { gapDays: number; dr0: number }
 
 export interface YearResult {
   year: number;
@@ -115,6 +120,8 @@ export interface RotationResult {
   paramsUsed: Param[];
   /** field calendar per cycle year (index 0 = first year of the cycle) × 12 months, averaged over the replay years */
   calendar: MonthCover[][];
+  /** per planting of the cycle: typical fallow length before it and the depletion it starts from */
+  antecedent: Antecedent[];
 }
 
 /** Share of a month's days with a living crop, and which crops occupied it (as a share of the month's days). */
@@ -123,6 +130,8 @@ export interface MonthCover { live: number; crops: { crop: PlantingCrop; share: 
 export interface SimOptions {
   irrigation: Irrigation;
   region: RegionId;
+  /** soil texture for the root-zone water balance (default loam) */
+  soil?: Soil;
   /** first and last harvest year to report (inclusive) */
   fromYear?: number;
   toYear?: number;
@@ -141,40 +150,16 @@ function quantile(sorted: number[], q: number): number {
  * season tables so both use identical physics.
  */
 export function seasonWater(
-  s: DailySeries, dd: DailyDerived, rainByMonth: Map<string, number>, daysInMonth: (y: number, m: number) => number,
-  crop: PlantingCrop, sowIdx: number, len: number, irrigated: boolean, region: RegionId,
-): { etc: number; eta: number; netIrrigation: number; et0: number; rain: number; yieldT: number } {
-  const params = paramsOf(crop);
-  const months = new Map<string, { y: number; m: number; etc: number; days: number }>();
-  let et0 = 0;
-  let rain = 0;
-  for (let k = 0; k < len; k++) {
-    const i = sowIdx + k;
-    const d = dd.dates[i];
-    const key = `${d.y}-${d.m}`;
-    const row = months.get(key) ?? { y: d.y, m: d.m, etc: 0, days: 0 };
-    row.etc += kcOnDay(params, k) * dd.et0[i];
-    row.days++;
-    months.set(key, row);
-    et0 += dd.et0[i];
-    rain += s.prcp[i];
-  }
-  let etc = 0;
-  let eta = 0;
-  let netIrr = 0;
-  for (const [key, row] of months) {
-    const peffShare = effectiveRainUSDA(rainByMonth.get(key) ?? 0) * (row.days / daysInMonth(row.y, row.m));
-    etc += row.etc;
-    eta += Math.min(row.etc, peffShare);
-    netIrr += Math.max(0, row.etc - peffShare);
-  }
-  if (irrigated) eta = etc;
+  s: DailySeries, dd: DailyDerived, crop: PlantingCrop, startIdx: number, sowIdx: number, len: number,
+  irrigated: boolean, region: RegionId, soil: Soil, dr0: number,
+): WaterWindow & { yieldT: number } {
+  const w = waterWindow(s, dd, crop, startIdx, sowIdx, len, irrigated, soil, dr0);
   let yieldT = 0;
   if (crop !== 'cover') {
     const ym = YM[region][crop].value;
-    yieldT = etc > 0 ? ym * Math.max(0, 1 - KY[crop].value * (1 - eta / etc)) : 0;
+    yieldT = w.etc > 0 ? ym * Math.max(0, 1 - KY[crop].value * (1 - w.eta / w.etc)) : 0;
   }
-  return { etc, eta, netIrrigation: irrigated ? netIrr : 0, et0, rain, yieldT };
+  return { ...w, yieldT };
 }
 
 /** Food, nitrogen and money from one harvested season (cover crop → zeros). */
@@ -213,30 +198,51 @@ export function simulateRotation(s: DailySeries, dd: DailyDerived, def: Rotation
   const n = s.tmax.length;
   const irrigated = opt.irrigation !== 'rainfed';
 
-  const { rainByMonth, daysInMonth } = monthTables(s, dd);
+  const soil = opt.soil ?? 'loam';
   const idxOf = new Map<string, number>();
   dd.dates.forEach((d, i) => idxOf.set(`${d.y}-${d.m}-${d.d}`, i));
 
   const occupied = new Uint8Array(n); // 0 = bare; k = CROP_LIST[k - 1] living on the field
   const seasons: SeasonResult[] = [];
 
+  // Continuous soil water balance over the whole series: each season starts where the previous one
+  // ended (through the bare fallow in between). Plantings are visited in chronological order.
+  // The first season starts at field capacity; with 2001 as the first year and results reported from
+  // 2015, that initial assumption has no influence on the reported years (13+ years of spin-up).
+  let prevEnd = -1;
+  let prevDepletion = 0;
+  const np = def.plantings.length;
+  const gaps: number[][] = Array.from({ length: np }, () => []);
+  const ends: number[][] = Array.from({ length: np }, () => []);
   const firstYear = dd.dates[0].y;
   for (let cyc = firstYear - def.cycleYears; cyc <= toYear; cyc += def.cycleYears) {
-    for (const p of def.plantings) {
+    def.plantings.forEach((p, j) => {
       const y = cyc + p.yearOffset;
       const sowIdx = idxOf.get(`${y}-${p.plant[0]}-${p.plant[1]}`);
-      if (sowIdx === undefined) continue;
+      if (sowIdx === undefined) return;
       const len = p.lengthDays ?? seasonLength(paramsOf(p.crop));
-      if (sowIdx + len > n) continue;
+      if (sowIdx + len > n) return;
       const harvestYear = dd.dates[sowIdx + len - 1].y;
       const code = CROP_LIST.indexOf(p.crop) + 1;
       for (let k = 0; k < len; k++) occupied[sowIdx + k] = code;
-      if (harvestYear < fromYear || harvestYear > toYear) continue;
 
-      const w = seasonWater(s, dd, rainByMonth, daysInMonth, p.crop, sowIdx, len, irrigated, opt.region);
-      seasons.push({ crop: p.crop, sowIdx, harvestYear, days: len, ...w });
-    }
+      const startIdx = prevEnd < 0 ? sowIdx : prevEnd + 1;
+      const w = seasonWater(s, dd, p.crop, startIdx, sowIdx, len, irrigated, opt.region, soil, prevEnd < 0 ? 0 : prevDepletion);
+      if (prevEnd >= 0) gaps[j].push(sowIdx - startIdx);
+      ends[j].push(w.endDepletion);
+      prevEnd = sowIdx + len - 1;
+      prevDepletion = w.endDepletion;
+      if (harvestYear < fromYear || harvestYear > toYear) return;
+      seasons.push({
+        crop: p.crop, sowIdx, harvestYear, days: len, etc: w.etc, eta: w.eta, netIrrigation: w.netIrrigation,
+        et0: w.et0, rain: w.rain, yieldT: w.yieldT, sowDepletion: w.sowDepletion, fallowRain: w.fallowRain,
+      });
+    });
   }
+  const med = (a: number[]) => (a.length ? [...a].sort((x, y) => x - y)[Math.floor(a.length / 2)] : 0);
+  const avg = (a: number[]) => (a.length ? a.reduce((t, x) => t + x, 0) / a.length : 0);
+  // each planting starts from the typical end state of the planting before it in the cycle
+  const antecedent: Antecedent[] = def.plantings.map((_, j) => ({ gapDays: med(gaps[j]), dr0: avg(ends[(j - 1 + np) % np]) }));
 
   // annual accounting
   const eff = opt.irrigation === 'drip' ? IRRIGATION_EFFICIENCY.drip.value : IRRIGATION_EFFICIENCY.canal.value;
@@ -306,7 +312,7 @@ export function simulateRotation(s: DailySeries, dd: DailyDerived, def: Rotation
   })));
 
   return {
-    id: def.id, def, seasons, years, mean, calendar,
+    id: def.id, def, seasons, years, mean, calendar, antecedent,
     peopleFedP: { p10: quantile(pf, 0.1), p50: quantile(pf, 0.5), p90: quantile(pf, 0.9) },
     nBalance10yKg: years.reduce((t, y) => t + y.nFixedKg - y.nRemovedKg, 0),
     paramsUsed,

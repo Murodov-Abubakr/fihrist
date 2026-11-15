@@ -58,7 +58,10 @@ describe('season tables + batches', () => {
     const t = payload.rotations[0].plantings[0].bySowYear;
     // replay harvest years 2015–2024 = wheat sown 2014–2023
     const fromTable = [2014, 2015, 2016, 2017, 2018, 2019, 2020, 2021, 2022, 2023].reduce((a, y) => a + t[y][5], 0) / 10;
-    expect(fromTable).toBeCloseTo(replay.mean.grossIrrigationM3, 6);
+    // Not identical since the soil water model: the replay carries each year's ACTUAL end-of-season soil
+    // state into the next season, while table seasons start from the AVERAGE state (so they can be
+    // recombined freely). Same physics, so they must agree closely.
+    expect(Math.abs(fromTable - replay.mean.grossIrrigationM3) / replay.mean.grossIrrigationM3).toBeLessThan(0.1);
   });
   it('warming raises irrigation need; less rain lowers rainfed food', () => {
     const hot = deriveForMc(gissar, 3, 0);

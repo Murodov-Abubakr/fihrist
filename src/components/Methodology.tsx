@@ -3,6 +3,7 @@ import { CROPS } from '../engine/crops';
 import { IRRIGATION_EFFICIENCY, KY, N_FIXED, NUTRITION, PRICE_USD_T, UREA_USD_T, YM, type Param, type Quality } from '../engine/params';
 import { HOT_DAY_C, MIN_RAIN_FOR_DRY_MM, Z_ABNORMAL } from '../engine/stress';
 import { MC_LIMITS } from '../engine/montecarlo';
+import { ROOT, SOIL } from '../engine/soilwater';
 
 /**
  * Methodology drawer (English). Parameter tables are generated from the engine's own Param records,
@@ -19,9 +20,12 @@ const EQUATIONS: [string, string, string][] = [
   ['Reference ET0 (primary)', 'ET0 = [0.408·Δ·(Rn − G) + γ·(900/(T+273))·u2·(es − ea)] / [Δ + γ·(1 + 0.34·u2)]', 'FAO-56 Penman–Monteith, Eq. 6; daily, G = 0; Rs/Rso clamped to [0.3, 1] (ASCE-EWRI 2005)'],
   ['Reference ET0 (cross-check)', 'ET0 = 0.0023 · 0.408·Ra · (Tmean + 17.8) · √(Tmax − Tmin)', 'Hargreaves, FAO-56 Eq. 52'],
   ['Crop ET', 'ETc = Kc(day) · ET0, Kc curve FAO-56 Eq. 66; Kc mid/end adjusted for wind and RHmin (Eq. 62, 65)', 'FAO-56'],
-  ['Effective rain (monthly)', 'Peff = P·(125 − 0.2P)/125 for P ≤ 250 mm; 125 + 0.1P above', 'USDA Soil Conservation Service method, as in FAO CROPWAT 8.0'],
-  ['Water deficit', 'deficit (m³/ha) = 10 · Σ max(0, ETc − Peff)', 'CLAUDE.md §5 (1 mm over 1 ha = 10 m³)'],
-  ['Irrigation withdrawal', 'gross = net deficit ÷ application efficiency', 'FAO Water Report (efficiency, see table)'],
+  ['Root-zone soil water (daily)', 'TAW = 1000·(θFC − θWP)·Zr;  RAW = p·TAW;  Dr,i = Dr,i−1 − P − I + ETa + DP,  0 ≤ Dr ≤ TAW', 'FAO-56 ch. 8, Eqs. 82, 83, 85, 86; p adjusted p + 0.04(5 − ETc) (Table 22 fn 2); RO = CR = 0'],
+  ['Water stress', 'Ks = (TAW − Dr) / ((1 − p)·TAW) when Dr > RAW, else 1;  ETa = Ks·ETc', 'FAO-56 Eq. 84 (checked against Example 37)'],
+  ['Fallow evaporation', 'E = (Kcb,bare + Ke)·ET0, Ke = Kr·(Kc,max − Kcb,bare), Kr = (TEW − De)/(TEW − REW) when De > REW', 'FAO-56 Eqs. 71, 74; Kcb,bare 0.15 (Table 18), Kc,max 1.2 (Example 31)'],
+  ['Irrigation (canal, drip)', 'irrigate to field capacity when Dr > RAW;  gross = net ÷ application efficiency', 'FAO-56 ch. 8 management rule; FAO Water Report (efficiency)'],
+  ['Water deficit', 'irrigated: 10·Σ net irrigation;  rainfed: 10·Σ (ETc − ETa)  (m³/ha)', 'CLAUDE.md §5 (1 mm over 1 ha = 10 m³)'],
+  ['Effective rain (climate summary only)', 'Peff = P·(125 − 0.2P)/125 for P ≤ 250 mm; 125 + 0.1P above', 'USDA-SCS method (FAO CROPWAT 8.0); used for the monthly climate summary, not for yields'],
   ['Growing degree-days / frost', 'GDD = Σ max(0, (Tmax + Tmin)/2 − Tbase); frost day: Tmin ≤ 0 °C', 'McMaster & Wilhelm 1997; CLAUDE.md §5'],
   ['Yield under water stress', '1 − Ya/Ym = Ky · (1 − ETa/ETc)', 'FAO-33 (Doorenbos & Kassam 1979)'],
   ['Nitrogen balance', 'N removed = grain protein / 6.25; N fixed = N_fix · Ya/Ym; N debt = max(0, removed − fixed)', 'FAO Food & Nutrition Paper 77 (6.25); GRDC 2015 (fixation)'],
@@ -103,6 +107,18 @@ export function Methodology() {
         {crops.map((c) => <li key={c.id}><span className="text-parchment">{t(`crops.${c.id}`)}:</span> {c.sources.join('; ')}{c.todo?.length ? ` — TODO: ${c.todo.join(' ')}` : ''}</li>)}
       </ul>
 
+      <H>Soil water by texture (FAO-56 Table 19)</H>
+      <ul>
+        {(['sand', 'loam', 'clay'] as const).map((s) => <ParamRow key={s} name={`${s[0].toUpperCase()}${s.slice(1)} — available water θFC − θWP`} p={SOIL[s].awc} />)}
+        {(['sand', 'loam', 'clay'] as const).map((s) => <ParamRow key={`${s}-tew`} name={`${s[0].toUpperCase()}${s.slice(1)} — total evaporable water TEW`} p={SOIL[s].tew} />)}
+      </ul>
+
+      <H>Rooting depth and depletion fraction (FAO-56 Table 22)</H>
+      <ul>
+        {crops.map((c) => <ParamRow key={c.id} name={`${t(`crops.${c.id}`)} — root depth Zr`} p={ROOT[c.id].zr} />)}
+        {crops.map((c) => <ParamRow key={`${c.id}-p`} name={`${t(`crops.${c.id}`)} — depletion fraction p`} p={ROOT[c.id].p} />)}
+      </ul>
+
       <H>Yield response Ky (FAO-33)</H>
       <ul>{crops.map((c) => <ParamRow key={c.id} name={t(`crops.${c.id}`)} p={KY[c.id]} />)}</ul>
 
@@ -133,7 +149,8 @@ export function Methodology() {
 
       <H>Not modelled yet (shown as information gaps)</H>
       <ul className="list-disc space-y-1 pl-5 text-[13px]">
-        <li>Soil-water storage between months (rainfed yields are likely underestimated).</li>
+        <li>Surface runoff and capillary rise in the soil water balance; roots are at full depth from sowing; one soil layer.</li>
+        <li>Stage-specific water-stress sensitivity (one seasonal Ky is used). In Kansas the rainfed wheat level is well below USDA averages — see Validation.</li>
         <li>Wheat winter dormancy; nitrogen losses (leaching, volatilisation); farm costs other than replacing nitrogen.</li>
         <li>Soil moisture and NDVI in the compound-stress index; canal allocation limits.</li>
         <li>Spatial resolution: POWER describes a ~50 km cell, a farm is ~1 ha.</li>
