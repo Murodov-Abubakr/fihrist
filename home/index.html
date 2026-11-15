@@ -1,0 +1,181 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Fihrist — crop rotations from NASA data</title>
+  <meta name="description" content="Fihrist reads 24 years of NASA data for any field and compares three crop rotations on water, soil nitrogen, food and risk. Every number is traceable to a dataset or a cited source.">
+  <meta property="og:title" content="Fihrist — crop rotations from NASA data">
+  <meta property="og:description" content="One auditable index for climate, water, soil and food. Built for water-stressed farms in Central Asia; validated in Kansas.">
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://www.fihrist.earth/">
+  <meta name="theme-color" content="#131518">
+  <link rel="icon" href="favicon.svg" type="image/svg+xml">
+  <link rel="preload" href="fonts/exo-2-latin-700-normal.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <a class="btn btn-primary skip" href="#main">Skip to content</a>
+
+  <header class="nav">
+    <div class="wrap">
+      <a class="brand" href="#top" aria-label="Fihrist home"><img src="favicon.svg" alt="" width="28" height="28">Fihrist</a>
+      <nav aria-label="Sections">
+        <ul>
+          <li><a href="#how">How it works</a></li>
+          <li><a href="#discovery">Discovery</a></li>
+          <li><a href="#validation">Validation</a></li>
+          <li><a href="#who">Who it's for</a></li>
+          <li><a href="#about">About</a></li>
+        </ul>
+      </nav>
+      <a class="btn btn-primary" href="https://app.fihrist.earth/">Open the app</a>
+    </div>
+  </header>
+
+  <main id="main">
+    <div class="hero" id="top">
+      <div class="wrap">
+        <p class="eyebrow">NASA Space Apps Challenge 2026 · Field Shift</p>
+        <h1>One index for climate, water, soil and food.</h1>
+        <p class="lead">Fihrist reads 24 years of NASA data for any field and compares three 3-year crop rotations: the one a farmer uses today and two adaptive ones. It shows water need, soil nitrogen, calories and protein per hectare, and the risk across thousands of possible futures. Every number is traceable to a dataset or a cited source.</p>
+        <div class="cta">
+          <a class="btn btn-primary" href="https://app.fihrist.earth/">Open the app</a>
+          <a class="btn btn-ghost" href="https://github.com/Murodov-Abubakr/fihrist">Read the method on GitHub</a>
+        </div>
+        <div class="stats" role="list">
+          <div role="listitem"><b>24 years</b><span>of daily NASA POWER weather per field</span></div>
+          <div role="listitem"><b>8 crops</b><span>with sourced water, food and nitrogen values</span></div>
+          <div role="listitem"><b>2,400</b><span>simulated futures per run (P10 / P50 / P90)</span></div>
+          <div role="listitem"><b>3 languages</b><span>English, Русский, Тоҷикӣ</span></div>
+        </div>
+      </div>
+    </div>
+
+    <section aria-labelledby="problem-h">
+      <div class="wrap">
+        <p class="eyebrow">The problem</p>
+        <h2 id="problem-h">Farm decisions need many datasets. Tools look at one at a time.</h2>
+        <p class="intro">In Tajikistan and northern Afghanistan, summer heat passes 40 °C, irrigation water is shared and limited, and years of continuous wheat or cotton draw down soil nitrogen. Climate, water, soil and nutrition are usually analysed in separate tools. A farmer choosing next year's crop has to combine them alone.</p>
+        <div class="grid g3">
+          <div class="card"><h3>Water</h3><p>How much irrigation does each rotation need in a normal year, a dry year, a hotter future?</p></div>
+          <div class="card"><h3>Soil</h3><p>Which rotation rebuilds nitrogen with legumes, and which one runs it down and needs more fertiliser?</p></div>
+          <div class="card"><h3>Food and income</h3><p>How many people can one hectare feed, and where does the familiar rotation still earn more in year one?</p></div>
+        </div>
+      </div>
+    </section>
+
+    <section id="how" aria-labelledby="how-h">
+      <div class="wrap">
+        <p class="eyebrow">How it works</p>
+        <h2 id="how-h">From a field outline to three explained rotations</h2>
+        <p class="intro">The equations produce the numbers; the interface only explains them. The method is open source and covered by unit tests, including FAO-56 worked examples.</p>
+        <div class="grid g4">
+          <div class="card"><span class="step">01</span><h3>Pick a field</h3><p>Fly to it on a 3D globe and outline the field, or start from one of four preset regions.</p></div>
+          <div class="card"><span class="step">02</span><h3>Read NASA data</h3><p>Daily NASA POWER weather (2001–2024), MODIS crop greenness, root-zone soil wetness and NASADEM terrain.</p></div>
+          <div class="card"><span class="step">03</span><h3>Run open equations</h3><p>FAO-56 Penman–Monteith evapotranspiration, a daily soil-water balance, FAO-33 yield response and a nitrogen balance.</p></div>
+          <div class="card"><span class="step">04</span><h3>Compare and decide</h3><p>Three rotations, each with why it is suggested, NASA evidence, benefits, data gaps and local risks for the farmer to review.</p></div>
+        </div>
+      </div>
+    </section>
+
+    <section id="discovery" aria-labelledby="disc-h">
+      <div class="wrap finding">
+        <div>
+          <p class="eyebrow">What only the combination shows</p>
+          <h2 id="disc-h">Where the datasets disagree, there is a question worth asking.</h2>
+          <p class="intro flush">Fihrist puts weather, soil water and satellite greenness on one monthly grid and compares each month with the field's own 24-year history. It flags months where <strong>crops were much less green than usual although heat, rain and soil water were normal</strong>. The cause lies outside the weather record.</p>
+          <p class="note">First result: all three Central Asian presets show this in <strong>March–April 2012</strong>; Kansas does not. The winter before was unusually cold at all three sites. Winter-kill or late green-up would fit, but this is a <strong>hypothesis to confirm with farmers</strong>, not a finding. The three sites share one regional winter.</p>
+        </div>
+        <div class="tablewrap">
+          <table>
+            <thead><tr><th scope="col">Winter 2011–12</th><th scope="col">Gissar</th><th scope="col">Khatlon</th><th scope="col">Balkh</th></tr></thead>
+            <tbody>
+              <tr><th scope="row">Frost days, February</th><td>27 <small>(19.1)</small></td><td>24 <small>(10.9)</small></td><td>21 <small>(9.6)</small></td></tr>
+              <tr><th scope="row">Frost days, March</th><td>19 <small>(7.5)</small></td><td>11 <small>(3.0)</small></td><td>8 <small>(2.5)</small></td></tr>
+              <tr><th scope="row">Crop NDVI, March 2012</th><td>0.26 <small>(0.42)</small></td><td>0.19 <small>(0.28)</small></td><td>0.17 <small>(0.28)</small></td></tr>
+            </tbody>
+          </table>
+          <p class="caption">Normal (2001–2024 mean) in brackets. NASA POWER daily minimum temperature; MODIS Terra NDVI averaged over ESA WorldCover cropland within 5 km.</p>
+        </div>
+      </div>
+    </section>
+
+    <section id="validation" aria-labelledby="val-h">
+      <div class="wrap">
+        <p class="eyebrow">Validation</p>
+        <h2 id="val-h">Validated in Kansas where ground truth exists</h2>
+        <p class="intro">Rainfed winter wheat simulated at the Kansas preset, compared with USDA NASS statewide yields for 2015–2024. We report the gap instead of tuning it away.</p>
+        <div class="grid g3">
+          <div class="card metric"><b class="good">r = 0.77</b><p>Year-to-year correlation with real Kansas yields</p></div>
+          <div class="card metric"><b class="good">8 of 9</b><p>Years in which the model moved in the same direction as NASS</p></div>
+          <div class="card metric"><b class="warn">−45 %</b><p>Mean level too low (1.64 vs 2.99 t/ha), so rainfed numbers are for comparing rotations, not forecasting a harvest</p></div>
+        </div>
+      </div>
+    </section>
+
+    <section id="who" aria-labelledby="who-h">
+      <div class="wrap">
+        <p class="eyebrow">Who it's for</p>
+        <h2 id="who-h">Built for the farmer, auditable by the scientist</h2>
+        <p class="intro">What works today, and what comes next.</p>
+        <div class="grid g3">
+          <div class="card">
+            <span class="tag tag-now">Available now</span>
+            <h3>Farmers and extension agents</h3>
+            <p>Outline a field, set the rotation you use today, choose your priorities (water, nitrogen, income and more) and compare three plans in your language.</p>
+            <ul><li>Next: monthly risk alerts by SMS for farmers without internet</li></ul>
+          </div>
+          <div class="card">
+            <span class="tag tag-now">Available now</span>
+            <h3>Scientists</h3>
+            <p>Every equation, constant and source is shown in the app and in the open repository, with the validation results and the methods we rejected.</p>
+            <ul><li>Next: CSV export and an open API</li><li>Next: checks against flux towers and field cameras</li></ul>
+          </div>
+          <div class="card">
+            <span class="tag tag-next">Planned</span>
+            <h3>Cooperatives, NGOs and companies</h3>
+            <p>Many fields in one view: which farms face compound stress next season, and which rotations lower water and fertiliser costs.</p>
+            <ul><li>Accounts and saved fields</li><li>Gross margin per hectare with local costs</li><li>Export to Excel and finance tools</li></ul>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section id="about" aria-labelledby="about-h">
+      <div class="wrap about">
+        <div>
+          <p class="eyebrow">About</p>
+          <h2 id="about-h">Why "Fihrist"</h2>
+          <p><em>Fihrist</em> means "index" in Persian and Arabic. In the 10th century, Ibn al-Nadim's <em>Kitab al-Fihrist</em> catalogued the knowledge of his time across disciplines. Scholars of the same tradition, such as Al-Biruni and Ibn Sina, worked across many fields at once. Fihrist follows that idea: connect separate datasets and disciplines in one auditable index.</p>
+          <p>Fihrist was built for the 2026 NASA Space Apps Challenge, challenge <em>Field Shift: Adapting Farms with NASA Data</em>. The code is open source under the MIT license.</p>
+        </div>
+        <div>
+          <p class="eyebrow">Beyond Earth</p>
+          <h2>The same limits, further away</h2>
+          <p>Every permanent settlement beyond Earth will have to farm in a closed loop. Water-stressed farms on Earth already live near those limits. The measures Fihrist reports (calories per cubic metre of water, nitrogen balance, people fed per hectare) are the same kinds used to evaluate bioregenerative life support. Fihrist shares those constraints; it does not design space habitats.</p>
+          <p class="banner">Fihrist supports, and does not replace, the judgment of farmers and agronomists.</p>
+        </div>
+      </div>
+    </section>
+
+    <section class="final" aria-labelledby="final-h">
+      <div class="wrap">
+        <h2 id="final-h">See your field through 24 years of NASA data</h2>
+        <p class="lead">Free and open source. Works on a phone.</p>
+        <div class="cta">
+          <a class="btn btn-primary" href="https://app.fihrist.earth/">Open the app</a>
+          <a class="btn btn-ghost" href="https://github.com/Murodov-Abubakr/fihrist">Source code</a>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer>
+    <div class="wrap">
+      <p><strong>Data:</strong> NASA POWER (NASA Langley Research Center) · NASA MODIS MOD13Q1 · NASADEM · ESA WorldCover · Microsoft Planetary Computer · FAO-56 and FAO-33 · USDA FoodData Central · USDA NASS. Full list with links in <a href="https://github.com/Murodov-Abubakr/fihrist/blob/master/SOURCES.md">SOURCES.md</a>.</p>
+      <p>NASA does not endorse this project. MIT license · <a href="https://github.com/Murodov-Abubakr/fihrist">GitHub</a> · <a href="https://app.fihrist.earth/">app.fihrist.earth</a></p>
+    </div>
+  </footer>
+</body>
+</html>
