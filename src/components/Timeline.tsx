@@ -172,7 +172,7 @@ export function Timeline({ analysis, sat }: { analysis: Analysis | null; sat?: S
           <div className="rounded-lg border border-brass/40 bg-black/25 p-4">
             <h3 className="eyebrow mb-1 !text-brass-glow">{t('timeline.hidden')}</h3>
             <p className="mb-3 text-[11px] leading-snug text-slate">{t('timeline.hiddenIntro')}</p>
-            {(['unexplained', 'buffered'] as const).map((kind) => {
+            {(['afterCold', 'unexplained', 'buffered'] as const).map((kind) => {
               const list = st.decoupled.filter((d) => d.kind === kind);
               return (
                 <div key={kind} className="mb-3 last:mb-0">
@@ -185,6 +185,7 @@ export function Timeline({ analysis, sat }: { analysis: Analysis | null; sat?: S
                           {months[d.month - 1]} {d.year}: NDVI {d.ndvi?.toFixed(2)} ({t('timeline.normal')} {d.ndviNormal?.toFixed(2)})
                           {d.z.dry !== undefined ? ` · ${t('timeline.zDry')} ${d.z.dry.toFixed(1)}` : ''}
                           {d.z.soil !== undefined ? ` · ${t('timeline.zSoil')} ${d.z.soil.toFixed(1)}` : ''}
+                          {d.cold ? ` · ${t('timeline.coldLine', { month: months[d.cold.month - 1], year: d.cold.year, t: d.cold.tmin.toFixed(1), tn: d.cold.tminNormal.toFixed(1) })}` : ''}
                         </li>
                       ))}
                     </ul>

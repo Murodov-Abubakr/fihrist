@@ -132,6 +132,10 @@ A layer that fails to download is stored as an information gap, never as evidenc
 | Compound month | ≥ max(2, n − 1) of the n defined signals with z > 1 (3 of 4; both of 2) | project choice; reduces to the earlier 2-signal rule without satellite data |
 | Unexplained vegetation stress | vegetation z > 1.5 while every defined weather/soil z < 0.5 | project choice — flags causes outside the climate record (irrigation cut, sowing failure, pests, land-use change) as questions, not conclusions |
 | Green despite drought | dryness or soil z > 1 while vegetation z < 0 | project choice — indicates buffering, most likely irrigation |
+| Cold signal | −z of monthly mean daily Tmin (NASA POWER T2M_MIN), defined for calendar months with mean Tmin ≤ 5 °C and ≥ 10 years; used by the decoupling detector only (compound index unchanged) | project choice |
+| Less green after a cold spell | an "unexplained" month where cold z > 1 in the same month or one of the 3 months before | project choice — candidate explanation (winter-kill, late green-up); in the cold month itself snow can also lower NDVI |
+
+Observed (2026-11-15, dev branch): with the cold signal, March and April 2012 at Gissar, Khatlon and Balkh move from "unexplained" to "after a cold spell" (cold February or March 2012, z 1.9–2.1). Consistent evidence for the cold-winter hypothesis, not proof: the three sites share one regional winter and field reports are still needed.
 
 ## Field year and stress calendar (`src/engine/stress.ts`, `RotationResult.calendar`)
 | Item | Choice | Source / rationale |

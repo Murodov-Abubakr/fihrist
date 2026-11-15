@@ -59,6 +59,35 @@ describe('Fihrist compound stress index — 4 signals', () => {
   });
 });
 
+describe('decoupling detector: vegetation stress after a cold spell', () => {
+  // Same synthetic years, plus a varying February minimum temperature (cold matters: mean ≤ 5 °C),
+  // a very cold February 2011, and spring crops (April NDVI 0.5) that are far less green in April 2011.
+  const { s, ndvi, wet } = synthetic();
+  const start = Date.UTC(2001, 0, 1);
+  s.tmin = s.tmin.map((v, i) => {
+    const d = new Date(start + i * 864e5); const y = d.getUTCFullYear(); const m = d.getUTCMonth() + 1;
+    if (m !== 2) return v;
+    return y === 2011 ? -8 : -1 + ((y % 3) - 1) * 0.5;
+  });
+  for (let y = 2001; y <= 2015; y++) ndvi.set(`${y}-4`, 0.5 + ((y % 3) - 1) * 0.01);
+  ndvi.set('2011-4', 0.2);
+  const r = stressCalendar(s, { ndvi, wetness: wet });
+  it('classifies the April collapse as "after a cold spell" and names the cold month', () => {
+    const e = r.decoupled.find((x) => x.year === 2011 && x.month === 4);
+    expect(e?.kind).toBe('afterCold');
+    expect(e?.cold).toMatchObject({ year: 2011, month: 2 });
+    expect(e!.cold!.z).toBeGreaterThan(1);
+  });
+  it('leaves a collapse with no preceding cold as "unexplained"', () => {
+    expect(r.decoupled.find((x) => x.year === 2012 && x.month === 7)?.kind).toBe('unexplained');
+  });
+  it('does not change the 4-signal compound index', () => {
+    const base = synthetic();
+    const r0 = stressCalendar(base.s, { ndvi: base.ndvi, wetness: base.wet });
+    expect(r.events.filter((e) => e.month !== 4).map((e) => `${e.year}-${e.month}`)).toEqual(r0.events.filter((e) => e.month !== 4).map((e) => `${e.year}-${e.month}`));
+  });
+});
+
 describe('satellite file validation (untrusted input)', () => {
   const good = {
     format: 'fihrist-sat-v1', id: 'kansas', lat: 38.8, lon: -99.3, createdAt: '2026-11-15',

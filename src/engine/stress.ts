@@ -20,6 +20,11 @@
  *          the climate record: irrigation supply cut, sowing failure, pests, land-use change);
  *      "green despite drought": dry or soil z > 1 while veg z < 0 (vegetation at or above normal)
  *        → crops buffered against a dry month (likely irrigation).
+ *      "after a cold spell": an "unexplained" month where winter cold was abnormal (cold z > 1) in the same
+ *        month or any of the COLD_LAG_MONTHS before it → a candidate explanation (winter-kill, late green-up).
+ *  - Cold signal (NASA POWER T2M_MIN): cold z = −(mean daily Tmin − mean) / sd, defined only for calendar
+ *    months whose mean Tmin ≤ COLD_MONTH_MAX_C (cold matters for crops) with ≥ 10 years. It is used by the
+ *    decoupling detector only, so the 4-signal compound index above is unchanged.
  *    Thresholds are project choices, documented in SOURCES.md.
  */
 import { dateAt, type DailySeries } from './climate.ts';
@@ -32,6 +37,8 @@ export const MIN_NDVI_FOR_VEG = 0.2;
 export const MIN_YEARS = 10;
 export const Z_DECOUPLE_VEG = 1.5;
 export const Z_NORMAL = 0.5;
+export const COLD_MONTH_MAX_C = 5;
+export const COLD_LAG_MONTHS = 3;
 
 export type Signal = 'heat' | 'dry' | 'soil' | 'veg';
 export const SIGNALS: Signal[] = ['heat', 'dry', 'soil', 'veg'];
@@ -55,7 +62,11 @@ export interface CompoundEvent {
   year: number; month: number; zHeat: number; zDry: number; tmax: number; tmaxNormal: number; rain: number; rainNormal: number;
   z: Partial<Record<Signal, number>>; abnormal: Signal[]; n: number;
 }
-export interface DecoupleEvent { year: number; month: number; kind: 'unexplained' | 'buffered'; z: Partial<Record<Signal, number>>; ndvi?: number; ndviNormal?: number }
+export interface DecoupleEvent {
+  year: number; month: number; kind: 'unexplained' | 'buffered' | 'afterCold'; z: Partial<Record<Signal, number>>; ndvi?: number; ndviNormal?: number;
+  /** for 'afterCold': the abnormally cold month that preceded (or coincided with) the vegetation stress */
+  cold?: { year: number; month: number; z: number; tmin: number; tminNormal: number };
+}
 
 export interface ExtraSignals { ndvi?: Map<string, number>; wetness?: Map<string, number> }
 
@@ -68,13 +79,14 @@ const sd = (a: number[]) => {
 
 export function stressCalendar(s: DailySeries, extra: ExtraSignals = {}): { months: MonthStress[]; events: CompoundEvent[]; decoupled: DecoupleEvent[]; signalsUsed: Signal[] } {
   // per (year, month) accumulators; only complete months are used
-  const acc = new Map<string, { y: number; m: number; n: number; full: number; tmax: number; rain: number; hot: number; frost: number }>();
+  const acc = new Map<string, { y: number; m: number; n: number; full: number; tmax: number; tmin: number; rain: number; hot: number; frost: number }>();
   for (let i = 0; i < s.tmax.length; i++) {
     const d = dateAt(s.start, i);
     const k = `${d.y}-${d.m}`;
-    const a = acc.get(k) ?? { y: d.y, m: d.m, n: 0, full: new Date(Date.UTC(d.y, d.m, 0)).getUTCDate(), tmax: 0, rain: 0, hot: 0, frost: 0 };
+    const a = acc.get(k) ?? { y: d.y, m: d.m, n: 0, full: new Date(Date.UTC(d.y, d.m, 0)).getUTCDate(), tmax: 0, tmin: 0, rain: 0, hot: 0, frost: 0 };
     a.n++;
     a.tmax += s.tmax[i];
+    a.tmin += s.tmin[i];
     a.rain += s.prcp[i];
     if (s.tmax[i] >= HOT_DAY_C) a.hot++;
     if (isFrostDay(s.tmin[i])) a.frost++;
@@ -82,6 +94,25 @@ export function stressCalendar(s: DailySeries, extra: ExtraSignals = {}): { mont
   }
   const rows = [...acc.values()].filter((a) => a.n === a.full);
   const signalsUsed: Signal[] = ['heat', 'dry', ...(extra.wetness?.size ? ['soil' as const] : []), ...(extra.ndvi?.size ? ['veg' as const] : [])];
+
+  // cold z per (year, month), for calendar months where cold matters (computed first: the detector looks back)
+  const cold = new Map<string, { z: number; tmin: number; tminNormal: number }>();
+  for (let m = 1; m <= 12; m++) {
+    const r = rows.filter((a) => a.m === m);
+    const xs = r.map((a) => a.tmin / a.n);
+    if (xs.length < MIN_YEARS) continue;
+    const mu = mean(xs), sdv = sd(xs);
+    if (sdv <= 0 || mu > COLD_MONTH_MAX_C) continue;
+    r.forEach((a, j) => cold.set(`${a.y}-${a.m}`, { z: -(xs[j] - mu) / sdv, tmin: xs[j], tminNormal: mu }));
+  }
+  const coldBefore = (y: number, m: number) => {
+    for (let lag = 0; lag <= COLD_LAG_MONTHS; lag++) {
+      const mm = ((m - 1 - lag + 1200) % 12) + 1, yy = y - (m - 1 - lag < 0 ? 1 : 0);
+      const c = cold.get(`${yy}-${mm}`);
+      if (c && c.z > Z_ABNORMAL) return { year: yy, month: mm, ...c };
+    }
+    return undefined;
+  };
 
   const months: MonthStress[] = [];
   const events: CompoundEvent[] = [];
@@ -129,7 +160,8 @@ export function stressCalendar(s: DailySeries, extra: ExtraSignals = {}): { mont
       if (z.veg !== undefined) {
         const others = present.filter((sig) => sig !== 'veg');
         if (others.length && z.veg > Z_DECOUPLE_VEG && others.every((sig) => (z[sig] as number) < Z_NORMAL)) {
-          decoupled.push({ year: a.y, month: m, kind: 'unexplained', z, ndvi: val.veg[j], ndviNormal: stats.veg.mean });
+          const c = coldBefore(a.y, m);
+          decoupled.push({ year: a.y, month: m, kind: c ? 'afterCold' : 'unexplained', z, ndvi: val.veg[j], ndviNormal: stats.veg.mean, ...(c ? { cold: c } : {}) });
         } else if (Math.max(z.dry ?? -Infinity, z.soil ?? -Infinity) > Z_ABNORMAL && z.veg < 0) {
           decoupled.push({ year: a.y, month: m, kind: 'buffered', z, ndvi: val.veg[j], ndviNormal: stats.veg.mean });
         }
